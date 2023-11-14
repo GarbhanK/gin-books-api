@@ -13,5 +13,5 @@ type CreateBookInput struct {
 
 type UpdateBookInput struct {
 	Title  string `json:"title"`
-	Author string `author:"author"`
+	Author string `json:"author"`
 }
