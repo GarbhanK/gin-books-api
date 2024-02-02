@@ -16,10 +16,12 @@ func main() {
 	r := gin.Default()
 
 	models.ConnectDatabase()
-	db.CreateFirestoreClient(ctx)
+	
+	fsClient := db.CreateFirestoreClient(ctx)
+	defer fsClient.Close()
 
-	r.GET("/ping", controllers.Ping)
-	r.GET("/books", controllers.FindBooks)
+	r.GET("/ping", controllers.Ping(ctx, fsClient))
+	r.GET("/books", controllers.FindBooks(ctx, fsClient))
 	r.POST("/books", controllers.CreateBook)
 	r.GET("/books/:id", controllers.FindBook)
 	r.PATCH("books/:id", controllers.UpdateBook)

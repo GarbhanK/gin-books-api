@@ -10,9 +10,8 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-var firestoreDB *firestore.Client
 
-func CreateFirestoreClient(ctx context.Context) {
+func CreateFirestoreClient(ctx context.Context) *firestore.Client {
 	// sets gcp project id
 	projectID := "YOUR_PROJECT_ID"
 
@@ -28,6 +27,6 @@ func CreateFirestoreClient(ctx context.Context) {
 	// close client when finished
 	// defer client.Close()
 
-	firestoreDB = client
+	return client
 }
 

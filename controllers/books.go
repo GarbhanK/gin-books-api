@@ -3,14 +3,16 @@ package controllers
 import (
 	"net/http"
 	"time"
+	"context"
 
 	"github.com/garbhank/gin-api-test/models"
 	"github.com/gin-gonic/gin"
+	"cloud.google.com/go/firestore"
 )
 
 // GET /ping
 // get server status
-func Ping(c *gin.Context) {
+func Ping(ctx context.Context, client *firestore.Client) func(c *gin.Context) {
 	currentTime := time.Now()
 
 	// put stuff here to ping firestore db
@@ -19,16 +21,26 @@ func Ping(c *gin.Context) {
 		APIStatus: "ok",
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": status})
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"data": status})
+	}
+
 }
 
 // GET /books
 // Get all books
-func FindBooks(c *gin.Context) {
+func FindBooks(ctx context.Context, client *firestore.Client) func(c *gin.Context) {
+
+	// GORM local db
 	var books []models.Book
 	models.DB.Find(&books)
 
-	c.JSON(http.StatusOK, gin.H{"data": books})
+	// c.JSON(http.StatusOK, gin.H{"data": books})
+
+	return func(c *gin.Context) {
+		// ref := client.Collection("books-api").Documents(ctx)
+		c.JSON(http.StatusOK, gin.H{"data": books})
+	}
 }
 
 // POST /books
