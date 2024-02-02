@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
+	
 	"github.com/gin-gonic/gin"
 
 	"github.com/garbhank/gin-api-test/controllers"
 	"github.com/garbhank/gin-api-test/models"
+	"github.com/garbhank/gin-api-test/db"
 )
 
 func main() {
 
+	ctx := context.Background()
 	r := gin.Default()
 
 	models.ConnectDatabase()
+	db.CreateFirestoreClient(ctx)
 
 	r.GET("/ping", controllers.Ping)
 	r.GET("/books", controllers.FindBooks)
