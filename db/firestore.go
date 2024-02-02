@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	// "flag"
+	"flag"
 	"log"
 
 	// "google.golang.org/api/iterator"
@@ -16,8 +16,8 @@ func CreateFirestoreClient(ctx context.Context) *firestore.Client {
 	projectID := "YOUR_PROJECT_ID"
 
 	// overwrite with project flags
-	// flag.StringVar(&projectID, "project", projectID, "The GCP project ID.")
-	// flag.Parse()
+	flag.StringVar(&projectID, "project", projectID, "The GCP project ID.")
+	flag.Parse()
 
 	client, err := firestore.NewClient(ctx, projectID)
 	if err != nil {

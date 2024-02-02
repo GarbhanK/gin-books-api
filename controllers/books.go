@@ -4,10 +4,13 @@ import (
 	"net/http"
 	"time"
 	"context"
+	// "fmt"
+	// "log"
 
 	"github.com/garbhank/gin-api-test/models"
 	"github.com/gin-gonic/gin"
 	"cloud.google.com/go/firestore"
+	// "google.golang.org/api/iterator"
 )
 
 // GET /ping
@@ -37,8 +40,35 @@ func FindBooks(ctx context.Context, client *firestore.Client) func(c *gin.Contex
 
 	// c.JSON(http.StatusOK, gin.H{"data": books})
 
+	// iter := client.Collection("books-api/books").Documents(ctx)
+	// defer iter.Stop() // add to clean up resources
+
+	// for {
+	// 	log.Println("starting iterator loop")
+	// 	doc, err := iter.Next()
+	// 	if err == iterator.Done {
+	// 		break
+	// 	}
+	// 	if err != nil {
+	// 		log.Fatalf("Failed to iterate: %v", err)
+	// 	}
+	// 	fmt.Println(doc.Data())
+	// }
+
 	return func(c *gin.Context) {
-		// ref := client.Collection("books-api").Documents(ctx)
+		// iter := client.Collection("books-api/books").Documents(ctx)
+		// defer iter.Stop() // add to clean up resources
+		// for {
+		// 	log.Println("starting iterator loop")
+		// 	doc, err := iter.Next()
+		// 	if err == iterator.Done {
+		// 		break
+		// 	}
+		// 	if err != nil {
+		// 		log.Fatalf("Failed to iterate: %v", err)
+		// 	}
+		// 	fmt.Println(doc.Data())
+		// }
 		c.JSON(http.StatusOK, gin.H{"data": books})
 	}
 }
