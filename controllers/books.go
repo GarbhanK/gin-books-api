@@ -2,10 +2,25 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/garbhank/gin-api-test/models"
 	"github.com/gin-gonic/gin"
 )
+
+// GET /ping
+// get server status
+func Ping(c *gin.Context) {
+	currentTime := time.Now()
+
+	// put stuff here to ping firestore db
+	var status = models.Status{
+		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
+		APIStatus: "ok",
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": status})
+}
 
 // GET /books
 // Get all books

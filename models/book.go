@@ -15,3 +15,9 @@ type UpdateBookInput struct {
 	Title  string `json:"title"`
 	Author string `json:"author"`
 }
+
+type Status struct {
+    Timestamp 		string `json:"timestamp"`
+    APIStatus 		string `json:"status"`
+	FirestoreStatus string `json:"firestore_status"`
+}
