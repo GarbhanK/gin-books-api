@@ -13,7 +13,7 @@ import (
 
 func CreateFirestoreClient(ctx context.Context) *firestore.Client {
 	// sets gcp project id
-	projectID := "YOUR_PROJECT_ID"
+	projectID := "learn-gcp-2112"
 
 	// overwrite with project flags
 	flag.StringVar(&projectID, "project", projectID, "The GCP project ID.")
@@ -24,9 +24,5 @@ func CreateFirestoreClient(ctx context.Context) *firestore.Client {
 		log.Fatalf("failed to create client: %v", err)
 	}
 
-	// close client when finished
-	// defer client.Close()
-
 	return client
 }
-

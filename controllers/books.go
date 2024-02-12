@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"time"
 	"context"
-	// "fmt"
-	// "log"
+	"fmt"
+	"log"
 
 	"github.com/garbhank/gin-api-test/models"
+	"github.com/garbhank/gin-api-test/firestore"
 	"github.com/gin-gonic/gin"
 	"cloud.google.com/go/firestore"
-	// "google.golang.org/api/iterator"
+	"google.golang.org/api/iterator"
 )
 
 
@@ -21,7 +22,7 @@ func Root(c *gin.Context) {
 
 // GET /ping
 // get server status
-func Ping(ctx context.Context, client *firestore.Client) func(c *gin.Context) {
+func Ping(ctx context.Context) func(c *gin.Context) {
 	currentTime := time.Now()
 
 	// put stuff here to ping firestore db
@@ -38,43 +39,36 @@ func Ping(ctx context.Context, client *firestore.Client) func(c *gin.Context) {
 
 // GET /books
 // Get all books
-func FindBooks(ctx context.Context, client *firestore.Client) func(c *gin.Context) {
+func FindBooks(ctx context.Context) func(c *gin.Context) {
 
 	// GORM local db
-	var books []models.Book
-	models.DB.Find(&books)
+	// var books []models.Book
+	// models.DB.Find(&books)
 
 	// c.JSON(http.StatusOK, gin.H{"data": books})
+	
+	var books []models.Book
 
-	// iter := client.Collection("books-api/books").Documents(ctx)
-	// defer iter.Stop() // add to clean up resources
+	// create client
+	client := firestore.CreateFirestoreClient(ctx)
+	defer client.Close()
+	
+	iter := client.Collection("books-api/books").Documents(ctx)
+	defer iter.Stop() // add to clean up resources
 
-	// for {
-	// 	log.Println("starting iterator loop")
-	// 	doc, err := iter.Next()
-	// 	if err == iterator.Done {
-	// 		break
-	// 	}
-	// 	if err != nil {
-	// 		log.Fatalf("Failed to iterate: %v", err)
-	// 	}
-	// 	fmt.Println(doc.Data())
-	// }
+	for {
+		log.Println("starting iterator loop")
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to iterate: %v", err)
+		}
+		fmt.Println(doc.Data())
+	}
 
 	return func(c *gin.Context) {
-		// iter := client.Collection("books-api/books").Documents(ctx)
-		// defer iter.Stop() // add to clean up resources
-		// for {
-		// 	log.Println("starting iterator loop")
-		// 	doc, err := iter.Next()
-		// 	if err == iterator.Done {
-		// 		break
-		// 	}
-		// 	if err != nil {
-		// 		log.Fatalf("Failed to iterate: %v", err)
-		// 	}
-		// 	fmt.Println(doc.Data())
-		// }
 		c.JSON(http.StatusOK, gin.H{"data": books})
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	
 	"github.com/gin-gonic/gin"
 
@@ -17,12 +18,14 @@ func main() {
 
 	models.ConnectDatabase()
 	
-	fsClient := db.CreateFirestoreClient(ctx)
-	defer fsClient.Close()
+	// fsClient := db.CreateFirestoreClient(ctx)
+	// defer fsClient.Close()
+
+	fmt.Println("Firestore Client created...")
 
 	r.GET("/", controllers.Root)
-	r.GET("/ping", controllers.Ping(ctx, fsClient))
-	r.GET("/books", controllers.FindBooks(ctx, fsClient))
+	r.GET("/ping", controllers.Ping)
+	// r.GET("/books", controllers.FindBooks(ctx, fsClient))
 	r.POST("/books", controllers.CreateBook)
 	r.GET("/books/:id", controllers.FindBook)
 	r.PATCH("books/:id", controllers.UpdateBook)
