@@ -10,7 +10,6 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-
 func CreateFirestoreClient(ctx context.Context) *firestore.Client {
 	// sets gcp project id
 	projectID := "learn-gcp-2112"
