@@ -19,12 +19,13 @@ func main() {
 	models.ConnectDatabase()
 	
 	r.GET("/", controllers.Root)
-	r.GET("/ping", controllers.Ping())
-	r.GET("/books", controllers.FindBooks())
+	r.GET("/ping", controllers.Ping)
+	r.GET("/books", controllers.FindBooks)
 	r.POST("/books", controllers.CreateBook)
-	r.GET("/books/:id", controllers.FindBook)
-	r.PATCH("books/:id", controllers.UpdateBook)
-	r.DELETE("/books/:id", controllers.DeleteBook)
+	r.GET("/books/:author", controllers.FindAuthor)
+	// r.GET("/books/:id", controllers.FindBook)
+	// r.PATCH("books/:id", controllers.UpdateBook)
+	// r.DELETE("/books/:id", controllers.DeleteBook)
 
 	err := r.Run()
 	if err != nil {

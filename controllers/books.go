@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strings"
 
 	"github.com/garbhank/gin-api-test/db"
 	"github.com/garbhank/gin-api-test/models"
@@ -20,7 +21,7 @@ func Root(c *gin.Context) {
 
 // GET /ping
 // get server status
-func Ping() func(c *gin.Context) {
+func Ping(c *gin.Context) {
 	currentTime := time.Now()
 	connectToFirestore := "unable to connect"
 
@@ -39,20 +40,12 @@ func Ping() func(c *gin.Context) {
 		FirestoreStatus: connectToFirestore,
 	}
 
-	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"data": status})
-	}
-
+	c.JSON(http.StatusOK, gin.H{"data": status})
 }
 
 // GET /books
 // Get all books
-func FindBooks() func(c *gin.Context) {
-
-	// GORM local db
-	// var books []models.Book
-	// models.DB.Find(&books)
-	// c.JSON(http.StatusOK, gin.H{"data": books})
+func FindBooks(c *gin.Context) {
 
 	// create client
 	ctx := context.Background()
@@ -85,9 +78,7 @@ func FindBooks() func(c *gin.Context) {
 		firestoreBooks = append(firestoreBooks, fsBookBuffer)
 	}
 
-	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"data": firestoreBooks})
-	}
+	c.JSON(http.StatusOK, gin.H{"data": firestoreBooks})
 }
 
 // POST /books
@@ -133,24 +124,73 @@ func FindBook(c *gin.Context) {
 
 // PATCH /books/:id
 // Update a book
-func UpdateBook(c *gin.Context) {
-	// Get model if exist
-	var book models.Book
-	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
-		return
+// func UpdateBook(c *gin.Context) {
+// 	// Get model if exist
+// 	var book models.Book
+// 	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+// 		return
+// 	}
+
+// 	// Validate Input
+// 	var input models.UpdateBookInput
+// 	if err := c.ShouldBindJSON(&input); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	models.DB.Model(&book).Updates(input)
+
+// 	c.JSON(http.StatusOK, gin.H{"data": book})
+// }
+
+func FindAuthor(c *gin.Context) {
+
+	// parse out parameter
+	log.Printf("author param: %v", c.Param("author"))
+	author := c.Param("author")
+	author = strings.ReplaceAll(author, " ", "")	// strip whitespace
+	author = strings.ToLower(author)
+	log.Printf("parsed author: %v", author)
+
+	// create client
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
+	defer client.Close()
+
+	// array of books to return
+	var authorBooks []models.Book
+
+	// iterator over books collection in firestore
+	iter := client.Collection("books").Documents(ctx)
+	defer iter.Stop() // add to clean up resources
+
+	// loop until all documents are added to books array
+	for {
+		var authorBooksBuffer models.Book
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to iterate:\n%v", err)
+		}
+
+		log.Println(doc.Data())
+		if err := doc.DataTo(&authorBooksBuffer); err != nil {
+			log.Fatalf("can't cast docsnap to Book:\n%v", err)
+		}
+
+		parsedFirebaseAuthor := strings.ReplaceAll(authorBooksBuffer.Author, " ", "")
+		parsedFirebaseAuthor = strings.ToLower(parsedFirebaseAuthor)
+
+		// append record to array
+		if (parsedFirebaseAuthor == author) {
+			authorBooks = append(authorBooks, authorBooksBuffer)
+		}
 	}
 
-	// Validate Input
-	var input models.UpdateBookInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	models.DB.Model(&book).Updates(input)
-
-	c.JSON(http.StatusOK, gin.H{"data": book})
+	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
 }
 
 // DELETE /books/:id

@@ -20,3 +20,7 @@ type Status struct {
 	APIStatus       string `json:"status"`
 	FirestoreStatus string `json:"firestore_status"`
 }
+
+type FindAuthorInput struct {
+	Author string `json:"author"`
+}
