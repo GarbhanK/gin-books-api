@@ -19,18 +19,19 @@ func Root(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "I am root"})
 }
 
+
 // GET /ping
 // get server status
 func Ping() func(c *gin.Context) {
 	currentTime := time.Now()
-	connectToFirestore := false
+	connectToFirestore := "unable to connect"
 
 	// create client
 	ctx := context.Background()
 	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 	if client != nil {
-		connectToFirestore = true
+		connectToFirestore = "ok"
 	}
 
 	// put stuff here to ping firestore db
@@ -45,6 +46,7 @@ func Ping() func(c *gin.Context) {
 	}
 
 }
+
 
 // GET /books
 // Get all books
@@ -61,7 +63,7 @@ func FindBooks() func(c *gin.Context) {
 	defer client.Close()
 
 	// array of books to return
-	var firestoreBooks []models.FirestoreBook
+	var firestoreBooks []models.Book
 
 	// iterator over books collection in firestore
 	iter := client.Collection("books").Documents(ctx)
@@ -69,7 +71,7 @@ func FindBooks() func(c *gin.Context) {
 
 	// loop until all documents are added to books array
 	for {
-		var fsBookBuffer models.FirestoreBook
+		var fsBookBuffer models.Book
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
@@ -79,7 +81,7 @@ func FindBooks() func(c *gin.Context) {
 		}
 		log.Println(doc.Data())
 		if err := doc.DataTo(&fsBookBuffer); err != nil {
-			log.Fatalf("can't cast docsnap to FirestoreBook:\n%v", err)
+			log.Fatalf("can't cast docsnap to Book:\n%v", err)
 		}
 	
 		// append record to array
@@ -87,9 +89,10 @@ func FindBooks() func(c *gin.Context) {
 	}
 
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"data": fsbooks})
+		c.JSON(http.StatusOK, gin.H{"data": firestoreBooks})
 	}
 }
+
 
 // POST /books
 // Create new book
@@ -119,6 +122,7 @@ func FindBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
 
+
 // PATCH /books/:id
 // Update a book
 func UpdateBook(c *gin.Context) {
@@ -141,6 +145,7 @@ func UpdateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
 
+
 // DELETE /books/:id
 // Delete a book
 func DeleteBook(c *gin.Context) {
@@ -155,3 +160,4 @@ func DeleteBook(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": true})
 }
+

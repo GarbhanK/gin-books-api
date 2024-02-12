@@ -1,15 +1,9 @@
 package models
 
 type Book struct {
-	ID     uint   `json:"id" gorm:"primary_key"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-}
-
-type FirestoreBook struct {
-	ID		int   `firestore:"id"`
-	Title	string `firestore:"title"`
-	Author	string `firestore:"author"`
+	ID     int   `json:"id" gorm:"primary_key" firestore:"id"`
+	Title  string `json:"title" firestore:"title"`
+	Author string `json:"author" firestore: "author"`
 }
 
 type CreateBookInput struct {
@@ -25,5 +19,5 @@ type UpdateBookInput struct {
 type Status struct {
     Timestamp 		string `json:"timestamp"`
     APIStatus 		string `json:"status"`
-	FirestoreStatus bool   `json:"firestore_status"`
+	FirestoreStatus string `json:"firestore_status"`
 }
