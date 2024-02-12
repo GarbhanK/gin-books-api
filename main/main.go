@@ -20,6 +20,7 @@ func main() {
 	fsClient := db.CreateFirestoreClient(ctx)
 	defer fsClient.Close()
 
+	r.GET("/", controllers.Root)
 	r.GET("/ping", controllers.Ping(ctx, fsClient))
 	r.GET("/books", controllers.FindBooks(ctx, fsClient))
 	r.POST("/books", controllers.CreateBook)

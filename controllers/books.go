@@ -13,6 +13,12 @@ import (
 	// "google.golang.org/api/iterator"
 )
 
+
+func Root(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "I am root"})
+}
+
+
 // GET /ping
 // get server status
 func Ping(ctx context.Context, client *firestore.Client) func(c *gin.Context) {
