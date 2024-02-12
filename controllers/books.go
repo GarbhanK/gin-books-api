@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"time"
 	"context"
-	// "fmt"
-	// "log"
+	"fmt"
+	"log"
 
 	"github.com/garbhank/gin-api-test/models"
 	"github.com/garbhank/gin-api-test/db"
 	"github.com/gin-gonic/gin"
-	// "google.golang.org/api/iterator"
+	"google.golang.org/api/iterator"
 )
 
 
@@ -63,20 +63,20 @@ func FindBooks() func(c *gin.Context) {
 	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 	
-	// iter := client.Collection("books-api/books").Documents(ctx)
-	// defer iter.Stop() // add to clean up resources
+	iter := client.Collection("books").Documents(ctx)
+	defer iter.Stop() // add to clean up resources
 
-	// for {
-	// 	log.Println("starting iterator loop")
-	// 	doc, err := iter.Next()
-	// 	if err == iterator.Done {
-	// 		break
-	// 	}
-	// 	if err != nil {
-	// 		log.Fatalf("Failed to iterate: %v", err)
-	// 	}
-	// 	fmt.Println(doc.Data())
-	// }
+	for {
+		log.Println("starting iterator loop")
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to iterate: %v", err)
+		}
+		fmt.Println(doc.Data())
+	}
 
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"data": books})

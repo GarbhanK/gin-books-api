@@ -1,14 +1,12 @@
 package main
 
 import (
-	// "context"
 	"fmt"
 	
 	"github.com/gin-gonic/gin"
 
 	"github.com/garbhank/gin-api-test/controllers"
 	"github.com/garbhank/gin-api-test/models"
-	// "github.com/garbhank/gin-api-test/db"
 )
 
 func main() {
