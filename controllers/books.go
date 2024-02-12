@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"time"
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/garbhank/gin-api-test/models"
 	"github.com/garbhank/gin-api-test/db"
+
+	_ "github.com/sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/api/iterator"
 )
@@ -17,7 +18,6 @@ import (
 func Root(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "I am root"})
 }
-
 
 // GET /ping
 // get server status
@@ -62,12 +62,14 @@ func FindBooks() func(c *gin.Context) {
 	ctx := context.Background()
 	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
+
+	// var fsbooks[]models.FirestoreBook
+	var fsBookBuffer models.FirestoreBook
 	
 	iter := client.Collection("books").Documents(ctx)
 	defer iter.Stop() // add to clean up resources
 
 	for {
-		log.Println("starting iterator loop")
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
@@ -75,11 +77,16 @@ func FindBooks() func(c *gin.Context) {
 		if err != nil {
 			log.Fatalf("Failed to iterate: %v", err)
 		}
-		fmt.Println(doc.Data())
+		log.Println(doc.Data())
+		if err := doc.DataTo(&fsBookBuffer); err != nil {
+			log.Fatalf("can't cast docsnap to FirestoreBook: %v", err)
+		}
 	}
 
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"data": books})
+		// c.JSON(http.StatusOK, gin.H{"data": books})
+		// c.JSON(http.StatusOK, gin.H{"data": fsbooks})
+		c.JSON(http.StatusOK, gin.H{"data": fsBookBuffer})
 	}
 }
 

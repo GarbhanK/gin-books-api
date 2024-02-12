@@ -1,23 +1,26 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/garbhank/gin-api-test/controllers"
 	"github.com/garbhank/gin-api-test/models"
 )
 
+func init() {
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
 
 	r := gin.Default()
+
 	models.ConnectDatabase()
 	
-	// fsClient := db.CreateFirestoreClient(ctx)
-	// defer fsClient.Close()
-
-	fmt.Println("Firestore Client created...")
+	log.Println("Firestore Client created...")
 
 	r.GET("/", controllers.Root)
 	r.GET("/ping", controllers.Ping())

@@ -6,6 +6,12 @@ type Book struct {
 	Author string `json:"author"`
 }
 
+type FirestoreBook struct {
+	ID		int   `firestore:"id"`
+	Title	string `firestore:"title"`
+	Author	string `firestore:"author"`
+}
+
 type CreateBookInput struct {
 	Title  string `json:"title" binding:"required"`
 	Author string `json:"author" binding:"required"`
