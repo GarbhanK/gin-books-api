@@ -51,42 +51,43 @@ func Ping() func(c *gin.Context) {
 func FindBooks() func(c *gin.Context) {
 
 	// GORM local db
-	var books []models.Book
-	models.DB.Find(&books)
-
+	// var books []models.Book
+	// models.DB.Find(&books)
 	// c.JSON(http.StatusOK, gin.H{"data": books})
 	
-	// var books []models.Book
-
 	// create client
 	ctx := context.Background()
 	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
-	// var fsbooks[]models.FirestoreBook
-	var fsBookBuffer models.FirestoreBook
-	
+	// array of books to return
+	var firestoreBooks []models.FirestoreBook
+
+	// iterator over books collection in firestore
 	iter := client.Collection("books").Documents(ctx)
 	defer iter.Stop() // add to clean up resources
 
+	// loop until all documents are added to books array
 	for {
+		var fsBookBuffer models.FirestoreBook
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Failed to iterate: %v", err)
+			log.Fatalf("Failed to iterate:\n%v", err)
 		}
 		log.Println(doc.Data())
 		if err := doc.DataTo(&fsBookBuffer); err != nil {
-			log.Fatalf("can't cast docsnap to FirestoreBook: %v", err)
+			log.Fatalf("can't cast docsnap to FirestoreBook:\n%v", err)
 		}
+	
+		// append record to array
+		firestoreBooks = append(firestoreBooks, fsBookBuffer)
 	}
 
 	return func(c *gin.Context) {
-		// c.JSON(http.StatusOK, gin.H{"data": books})
-		// c.JSON(http.StatusOK, gin.H{"data": fsbooks})
-		c.JSON(http.StatusOK, gin.H{"data": fsBookBuffer})
+		c.JSON(http.StatusOK, gin.H{"data": fsbooks})
 	}
 }
 
