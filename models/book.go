@@ -1,7 +1,6 @@
 package models
 
 type Book struct {
-	ID     int    `json:"id" gorm:"primary_key" firestore:"id"`
 	Title  string `json:"title" firestore:"title"`
 	Author string `json:"author" firestore: "author"`
 }

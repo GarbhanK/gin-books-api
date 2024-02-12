@@ -93,6 +93,13 @@ func FindBooks() func(c *gin.Context) {
 // POST /books
 // Create new book
 func CreateBook(c *gin.Context) {
+
+	// create client
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
+	defer client.Close()
+
+
 	// Validate input
 	var input models.CreateBookInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -100,8 +107,14 @@ func CreateBook(c *gin.Context) {
 		return
 	}
 
+	// create a DocumentReference
+	_, _, err := client.Collection("books").Add(ctx, input)
+	if err != nil {
+        log.Fatalf("Failed adding document:\n%v", err)
+	}
+
 	book := models.Book{Title: input.Title, Author: input.Author}
-	models.DB.Create(&book)
+	// models.DB.Create(&book)
 
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }

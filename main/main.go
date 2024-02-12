@@ -1,8 +1,6 @@
 package main
 
 import (
-	// "fmt"
-	
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
@@ -20,8 +18,6 @@ func main() {
 
 	models.ConnectDatabase()
 	
-	log.Println("Firestore Client created...")
-
 	r.GET("/", controllers.Root)
 	r.GET("/ping", controllers.Ping())
 	r.GET("/books", controllers.FindBooks())
