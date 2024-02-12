@@ -19,5 +19,5 @@ type UpdateBookInput struct {
 type Status struct {
     Timestamp 		string `json:"timestamp"`
     APIStatus 		string `json:"status"`
-	FirestoreStatus string `json:"firestore_status"`
+	FirestoreStatus bool   `json:"firestore_status"`
 }
