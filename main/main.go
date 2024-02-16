@@ -25,7 +25,7 @@ func main() {
 	r.GET("/books/author/", controllers.FindAuthor)
 	r.GET("/books/title/", controllers.FindBook)
 	// r.PATCH("books/:id", controllers.UpdateBook)
-	r.DELETE("/books/", controllers.DeleteBook)
+	// r.DELETE("/books/", controllers.DeleteBook)
 
 	err := r.Run()
 	if err != nil {
