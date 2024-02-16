@@ -22,7 +22,7 @@ func main() {
 	r.GET("/ping", controllers.Ping)
 	r.GET("/books", controllers.FindBooks)
 	r.POST("/books", controllers.CreateBook)
-	r.GET("/books/:author", controllers.FindAuthor)
+	r.GET("/books/author/", controllers.FindAuthor)
 	// r.GET("/books/:id", controllers.FindBook)
 	// r.PATCH("books/:id", controllers.UpdateBook)
 	// r.DELETE("/books/:id", controllers.DeleteBook)

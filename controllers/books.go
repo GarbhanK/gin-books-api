@@ -146,12 +146,13 @@ func FindBook(c *gin.Context) {
 
 func FindAuthor(c *gin.Context) {
 
-	// parse out parameter
-	log.Printf("author param: %v", c.Param("author"))
-	author := c.Param("author")
-	author = strings.ReplaceAll(author, " ", "")	// strip whitespace
-	author = strings.ToLower(author)
-	log.Printf("parsed author: %v", author)
+	// parse out author name in query params
+	log.Printf("author query param %v", c.Query("name"))
+	author, err := c.GetQuery("name")
+	if err == false {
+		log.Printf("No name provided...")
+		return
+	}
 
 	// create client
 	ctx := context.Background()
@@ -181,11 +182,12 @@ func FindAuthor(c *gin.Context) {
 			log.Fatalf("can't cast docsnap to Book:\n%v", err)
 		}
 
-		parsedFirebaseAuthor := strings.ReplaceAll(authorBooksBuffer.Author, " ", "")
-		parsedFirebaseAuthor = strings.ToLower(parsedFirebaseAuthor)
+		// parsedFirebaseAuthor := strings.ReplaceAll(authorBooksBuffer.Author, " ", "")
+		authorLower := strings.ToLower(author)
+		parsedFirebaseAuthor := strings.ToLower(authorBooksBuffer.Author)
 
 		// append record to array
-		if (parsedFirebaseAuthor == author) {
+		if (parsedFirebaseAuthor == authorLower) {
 			authorBooks = append(authorBooks, authorBooksBuffer)
 		}
 	}
