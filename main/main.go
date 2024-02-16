@@ -4,8 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/garbhank/gin-api-test/controllers"
-	"github.com/garbhank/gin-api-test/models"
+	"github.com/garbhank/gin-books-api/controllers"
 )
 
 func init() {
@@ -16,7 +15,8 @@ func main() {
 
 	r := gin.Default()
 
-	models.ConnectDatabase()
+	// dropping the GORM stuff for now, switching to Firebase
+	// models.ConnectDatabase()
 	
 	r.GET("/", controllers.Root)
 	r.GET("/ping", controllers.Ping)
@@ -25,7 +25,7 @@ func main() {
 	r.GET("/books/author/", controllers.FindAuthor)
 	r.GET("/books/title/", controllers.FindBook)
 	// r.PATCH("books/:id", controllers.UpdateBook)
-	// r.DELETE("/books/:id", controllers.DeleteBook)
+	r.DELETE("/books/", controllers.DeleteBook)
 
 	err := r.Run()
 	if err != nil {

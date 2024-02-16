@@ -7,8 +7,8 @@ import (
 	"time"
 	"strings"
 
-	"github.com/garbhank/gin-api-test/db"
-	"github.com/garbhank/gin-api-test/models"
+	"github.com/garbhank/gin-books-api/db"
+	"github.com/garbhank/gin-books-api/models"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/sirupsen/logrus"
@@ -162,16 +162,6 @@ func FindBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
 }
 
-// PATCH /books/:id
-// Update a book
-// func UpdateBook(c *gin.Context) {
-// 	// Get model if exist
-// 	var book models.Book
-// 	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
-// 		return
-// 	}
-
 // 	// Validate Input
 // 	var input models.UpdateBookInput
 // 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -235,17 +225,72 @@ func FindAuthor(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
 }
 
-// DELETE /books/:id
+
 // Delete a book
 func DeleteBook(c *gin.Context) {
-	// Get model if exist
-	var book models.Book
-	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+
+	// parse out author name in query params
+	log.Printf("params: %v, %v", c.Query("collectionName"), c.Query("title"))
+
+	collectionName, err := c.GetQuery("collectionName")
+	if err == false {
+		log.Printf("No title provided...")
 		return
 	}
 
-	models.DB.Delete(&book)
+	title, err := c.GetQuery("title")
+	if err == false {
+		log.Printf("No title provided...")
+		return
+	}
+
+	// create client
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
+	defer client.Close()
+
+	col := client.Collection(collectionName)
+	bulkwriter := client.BulkWriter(ctx)
+
+	for {
+		iter := col.Limit(1).Documents(ctx)
+		numDeleted := 0
+
+		for {
+			var booksBuffer models.Book
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Failed to iterate:\n%v", err)
+			}
+
+			log.Println(doc.Data())
+			if err := doc.DataTo(&booksBuffer); err != nil {
+				log.Fatalf("can't cast docsnap to Book:\n%v", err)
+			}
+	
+			titleLower := strings.ToLower(title)
+			parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
+	
+			// append record to array
+			if (parsedFirebaseTitle == titleLower) {
+				bulkwriter.Delete(doc.Ref)
+				numDeleted++
+			}	
+
+		}
+
+		// if there are no docs to delete, process over
+		if numDeleted == 0 {
+			bulkwriter.End()
+			return
+		}
+		bulkwriter.Flush()
+	}
+
+	log.Printf("Deleted collection: {}", collectionName)
 
 	c.JSON(http.StatusOK, gin.H{"data": true})
 }

@@ -2,10 +2,7 @@ package db
 
 import (
 	"context"
-	// "flag"
 	"log"
-
-	// "google.golang.org/api/iterator"
 
 	"cloud.google.com/go/firestore"
 )
