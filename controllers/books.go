@@ -113,13 +113,53 @@ func CreateBook(c *gin.Context) {
 // GET /books/:id
 // Find a book
 func FindBook(c *gin.Context) {
-	var book models.Book
-
-	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+	
+	// parse out author name in query params
+	log.Printf("title query param %v", c.Query("title"))
+	title, err := c.GetQuery("title")
+	if err == false {
+		log.Printf("No title provided...")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": book})
+
+	// create client
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
+	defer client.Close()
+
+	// array of books to return
+	var bookDocs []models.Book
+
+	// iterator over books collection in firestore
+	iter := client.Collection("books").Documents(ctx)
+	defer iter.Stop() // add to clean up resources
+
+	// loop until all documents are added to books array
+	for {
+		var booksBuffer models.Book
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to iterate:\n%v", err)
+		}
+
+		log.Println(doc.Data())
+		if err := doc.DataTo(&booksBuffer); err != nil {
+			log.Fatalf("can't cast docsnap to Book:\n%v", err)
+		}
+
+		titleLower := strings.ToLower(title)
+		parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
+
+		// append record to array
+		if (parsedFirebaseTitle == titleLower) {
+			bookDocs = append(bookDocs, booksBuffer)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
 }
 
 // PATCH /books/:id
