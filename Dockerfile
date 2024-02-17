@@ -1,6 +1,7 @@
 # create binary from official golang image
 FROM golang:1.21-bookworm as builder
 
+
 # create and change to app dir
 WORKDIR /app
 
@@ -23,9 +24,9 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
 # copy binary to prod image from builder stage
 COPY --from=builder /app/gin-server /app/gin-server
 
-# EXPOSE 80
+EXPOSE 8080
 
+ENV GIN_MODE="release"
 
 # Run the web service on container startup
 CMD ["/app/gin-server"]
-
