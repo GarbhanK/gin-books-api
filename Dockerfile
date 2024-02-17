@@ -23,6 +23,8 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
 # copy binary to prod image from builder stage
 COPY --from=builder /app/gin-server /app/gin-server
 
+# EXPOSE 80
+
 
 # Run the web service on container startup
 CMD ["/app/gin-server"]
