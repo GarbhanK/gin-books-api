@@ -23,15 +23,14 @@ func Root(c *gin.Context) {
 // get server status
 func Ping(c *gin.Context) {
 	currentTime := time.Now()
-	connectToFirestore := "unable to connect"
+	connectToFirestore := "unable to connect!"
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
-	defer client.Close()
+	client := db.CreateFirestoreClient(context.Background())
 	if client != nil {
 		connectToFirestore = "ok"
 	}
+	defer client.Close()
 
 	// put stuff here to ping firestore db
 	var status = models.Status{
@@ -48,8 +47,7 @@ func Ping(c *gin.Context) {
 func FindBooks(c *gin.Context) {
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
+	client := db.CreateFirestoreClient(context.Background())
 	defer client.Close()
 
 	// array of books to return
@@ -86,8 +84,7 @@ func FindBooks(c *gin.Context) {
 func CreateBook(c *gin.Context) {
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
+	client := db.CreateFirestoreClient(context.Background())
 	defer client.Close()
 
 	// Validate input
@@ -121,8 +118,7 @@ func FindBook(c *gin.Context) {
 	}
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
+	client := db.CreateFirestoreClient(context.Background())
 	defer client.Close()
 
 	// array of books to return
@@ -178,8 +174,7 @@ func FindAuthor(c *gin.Context) {
 	}
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
+	client := db.CreateFirestoreClient(context.Background())
 	defer client.Close()
 
 	// array of books to return
@@ -227,8 +222,7 @@ func DeleteBook(c *gin.Context) {
 	}
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
+	client := db.CreateFirestoreClient(context.Background())
 	defer client.Close()
 
 	bulkwriter := client.BulkWriter(ctx)
