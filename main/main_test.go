@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-	"encoding/json"
 
 	"github.com/stretchr/testify/assert"
 
@@ -13,7 +13,7 @@ import (
 )
 
 type PingStatusTest struct {
-	Data  models.Status `json:"data"`
+	Data models.Status `json:"data"`
 }
 
 func TestPingRoute(t *testing.T) {

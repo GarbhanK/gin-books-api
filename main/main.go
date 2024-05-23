@@ -27,7 +27,7 @@ func setupRouter() *gin.Engine {
 func main() {
 
 	r := setupRouter()
-	
+
 	err := r.Run(":8080")
 	if err != nil {
 		return

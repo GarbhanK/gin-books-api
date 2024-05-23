@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/garbhank/gin-books-api/db"
 	"github.com/garbhank/gin-books-api/models"
@@ -100,7 +100,7 @@ func CreateBook(c *gin.Context) {
 	// create a DocumentReference
 	_, _, err := client.Collection("books").Add(ctx, newBook)
 	if err != nil {
-        log.Fatalf("Failed adding document:\n%v", err)
+		log.Fatalf("Failed adding document:\n%v", err)
 	}
 
 	book := models.Book{Title: newBook.Title, Author: newBook.Author}
@@ -111,7 +111,7 @@ func CreateBook(c *gin.Context) {
 // GET /books/:title
 // Find a book
 func FindBook(c *gin.Context) {
-	
+
 	// parse out author name in query params
 	log.Printf("title query param %v", c.Query("title"))
 	title, err := c.GetQuery("title")
@@ -214,7 +214,6 @@ func FindAuthor(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
 }
 
-
 // Delete a book
 func DeleteBook(c *gin.Context) {
 
@@ -254,11 +253,12 @@ func DeleteBook(c *gin.Context) {
 				log.Fatalf("can't cast docsnap to Book:\n%v", err)
 			}
 
+			// lowercase titles for string matching
 			titleLower := strings.ToLower(title)
 			parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
 
-			// append record to array
-			if (parsedFirebaseTitle == titleLower) {
+			// if title matches, add to batch delete
+			if parsedFirebaseTitle == titleLower {
 				bulkwriter.Delete(doc.Ref)
 				numDeleted++
 			}
