@@ -90,22 +90,20 @@ func CreateBook(c *gin.Context) {
 	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
-
 	// Validate input
-	var input models.CreateBookInput
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var newBook models.CreateBookInput
+	if err := c.ShouldBindJSON(&newBook); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// create a DocumentReference
-	_, _, err := client.Collection("books").Add(ctx, input)
+	_, _, err := client.Collection("books").Add(ctx, newBook)
 	if err != nil {
         log.Fatalf("Failed adding document:\n%v", err)
 	}
 
-	book := models.Book{Title: input.Title, Author: input.Author}
-	// models.DB.Create(&book)
+	book := models.Book{Title: newBook.Title, Author: newBook.Author}
 
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
@@ -226,13 +224,7 @@ func FindAuthor(c *gin.Context) {
 func DeleteBook(c *gin.Context) {
 
 	// parse out author name in query params
-	log.Printf("params: %v, %v", c.Query("collectionName"), c.Query("title"))
-
-	collectionName, err := c.GetQuery("collectionName")
-	if err == false {
-		log.Printf("No title provided...")
-		return
-	}
+	log.Printf("params: %v", c.Query("title"))
 
 	title, err := c.GetQuery("title")
 	if err == false {
@@ -245,11 +237,10 @@ func DeleteBook(c *gin.Context) {
 	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
-	col := client.Collection(collectionName)
 	bulkwriter := client.BulkWriter(ctx)
 
 	for {
-		iter := col.Limit(1).Documents(ctx)
+		iter := client.Collection("books").Where("Title", "==", title).Documents(ctx)
 		numDeleted := 0
 
 		for {
@@ -263,6 +254,7 @@ func DeleteBook(c *gin.Context) {
 			}
 
 			log.Println(doc.Data())
+
 			if err := doc.DataTo(&booksBuffer); err != nil {
 				log.Fatalf("can't cast docsnap to Book:\n%v", err)
 			}
@@ -275,7 +267,6 @@ func DeleteBook(c *gin.Context) {
 				bulkwriter.Delete(doc.Ref)
 				numDeleted++
 			}
-
 		}
 
 		// if there are no docs to delete, process over
@@ -286,7 +277,7 @@ func DeleteBook(c *gin.Context) {
 		bulkwriter.Flush()
 	}
 
-	log.Printf("Deleted collection: %s", collectionName)
+	log.Printf("Deleted record: %s", title)
 
 	c.JSON(http.StatusOK, gin.H{"data": true})
 }
