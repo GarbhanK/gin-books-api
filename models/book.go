@@ -2,7 +2,7 @@ package models
 
 type Book struct {
 	Title  string `json:"title" firestore:"title"`
-	Author string `json:"author" firestore: "author"`
+	Author string `json:"author" firestore:"author"`
 }
 
 type CreateBookInput struct {
