@@ -11,23 +11,24 @@ func init() {
 	log.SetLevel(log.InfoLevel)
 }
 
-func main() {
-
+func setupRouter() *gin.Engine {
 	r := gin.Default()
-
-	// dropping the GORM stuff for now, switching to Firebase
-	// models.ConnectDatabase()
-	
 	r.GET("/", controllers.Root)
 	r.GET("/ping", controllers.Ping)
 	r.GET("/books", controllers.FindBooks)
 	r.POST("/books", controllers.CreateBook)
 	r.GET("/books/author/", controllers.FindAuthor)
 	r.GET("/books/title/", controllers.FindBook)
-	// r.PATCH("books/:id", controllers.UpdateBook)
 	r.DELETE("/books/", controllers.DeleteBook)
+	// r.PATCH("books/:id", controllers.UpdateBook)
+	return r
+}
 
-	err := r.Run()
+func main() {
+
+	r := setupRouter()
+	
+	err := r.Run(":8080")
 	if err != nil {
 		return
 	}
