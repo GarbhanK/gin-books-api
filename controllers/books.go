@@ -270,15 +270,15 @@ func DeleteBook(c *gin.Context) {
 			if err := doc.DataTo(&booksBuffer); err != nil {
 				log.Fatalf("can't cast docsnap to Book:\n%v", err)
 			}
-	
+
 			titleLower := strings.ToLower(title)
 			parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
-	
+
 			// append record to array
 			if (parsedFirebaseTitle == titleLower) {
 				bulkwriter.Delete(doc.Ref)
 				numDeleted++
-			}	
+			}
 
 		}
 
@@ -290,7 +290,7 @@ func DeleteBook(c *gin.Context) {
 		bulkwriter.Flush()
 	}
 
-	log.Printf("Deleted collection: {}", collectionName)
+	log.Printf("Deleted collection: %s", collectionName)
 
 	c.JSON(http.StatusOK, gin.H{"data": true})
 }
