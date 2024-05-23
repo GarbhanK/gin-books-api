@@ -108,7 +108,7 @@ func CreateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
 
-// GET /books/:id
+// GET /books/:title
 // Find a book
 func FindBook(c *gin.Context) {
 	
@@ -129,12 +129,13 @@ func FindBook(c *gin.Context) {
 	var bookDocs []models.Book
 
 	// iterator over books collection in firestore
-	iter := client.Collection("books").Documents(ctx)
+	iter := client.Collection("books").Where("Title", "==", title).Documents(ctx)
 	defer iter.Stop() // add to clean up resources
 
-	// loop until all documents are added to books array
+	// loop until all documents matching title are added to books array
 	for {
 		var booksBuffer models.Book
+
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
@@ -148,13 +149,7 @@ func FindBook(c *gin.Context) {
 			log.Fatalf("can't cast docsnap to Book:\n%v", err)
 		}
 
-		titleLower := strings.ToLower(title)
-		parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
-
-		// append record to array
-		if (parsedFirebaseTitle == titleLower) {
-			bookDocs = append(bookDocs, booksBuffer)
-		}
+		bookDocs = append(bookDocs, booksBuffer)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
