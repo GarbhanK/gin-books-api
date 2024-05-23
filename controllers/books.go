@@ -192,13 +192,14 @@ func FindAuthor(c *gin.Context) {
 	// array of books to return
 	var authorBooks []models.Book
 
-	// iterator over books collection in firestore
-	iter := client.Collection("books").Documents(ctx)
+	iter := client.Collection("books").Where("Author", "==", author).Documents(ctx)
 	defer iter.Stop() // add to clean up resources
 
 	// loop until all documents are added to books array
 	for {
+		log.Println("starting the loop...")
 		var authorBooksBuffer models.Book
+
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
@@ -208,18 +209,13 @@ func FindAuthor(c *gin.Context) {
 		}
 
 		log.Println(doc.Data())
+
 		if err := doc.DataTo(&authorBooksBuffer); err != nil {
 			log.Fatalf("can't cast docsnap to Book:\n%v", err)
 		}
 
-		// parsedFirebaseAuthor := strings.ReplaceAll(authorBooksBuffer.Author, " ", "")
-		authorLower := strings.ToLower(author)
-		parsedFirebaseAuthor := strings.ToLower(authorBooksBuffer.Author)
-
-		// append record to array
-		if (parsedFirebaseAuthor == authorLower) {
-			authorBooks = append(authorBooks, authorBooksBuffer)
-		}
+		// append record to return array
+		authorBooks = append(authorBooks, authorBooksBuffer)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
