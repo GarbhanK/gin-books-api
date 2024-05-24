@@ -111,11 +111,9 @@ func CreateBook(c *gin.Context) {
 // Find a specific book
 func FindBook(c *gin.Context) {
 	// parse out author name in query params
-	log.Printf("title query param %v", c.Query("title"))
-	title, err := c.GetQuery("title")
-	if err == false {
-		log.Printf("No title provided...")
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No title parameter provided"})
+	title, err := getParams(c, "title")
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
 	}
 
@@ -157,10 +155,9 @@ func FindBook(c *gin.Context) {
 func FindAuthor(c *gin.Context) {
 
 	// parse out author name in query params
-	log.Printf("author query param %v", c.Query("name"))
-	author, err := c.GetQuery("name")
-	if err == false {
-		log.Printf("No name provided...")
+	author, err := getParams(c, "name")
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'name' parameter provided"})
 		return
 	}
 
@@ -201,15 +198,12 @@ func FindAuthor(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
 }
 
-// Delete a book
+// Delete a book by title
 func DeleteBook(c *gin.Context) {
-
 	// parse out author name in query params
-	log.Printf("params: %v", c.Query("title"))
-
-	title, err := c.GetQuery("title")
-	if err == false {
-		log.Printf("No title provided...")
+	title, err := getParams(c, "title")
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
 	}
 
@@ -240,11 +234,9 @@ func DeleteBook(c *gin.Context) {
 				log.Fatalf("can't cast docsnap to Book:\n%v", err)
 			}
 
-			// lowercase titles for string matching
+			// lowercase titles for matching book titles
 			titleLower := strings.ToLower(title)
 			parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
-
-			// if title matches, add to batch delete
 			if parsedFirebaseTitle == titleLower {
 				bulkwriter.Delete(doc.Ref)
 				numDeleted++
@@ -260,6 +252,5 @@ func DeleteBook(c *gin.Context) {
 	}
 
 	log.Printf("Deleted record: %s", title)
-
 	c.JSON(http.StatusOK, gin.H{"data": true})
 }
