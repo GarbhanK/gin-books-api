@@ -107,15 +107,15 @@ func CreateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
 
-// GET /books/:title
-// Find a book
+// GET /books/title/
+// Find a specific book
 func FindBook(c *gin.Context) {
-
 	// parse out author name in query params
 	log.Printf("title query param %v", c.Query("title"))
 	title, err := c.GetQuery("title")
 	if err == false {
 		log.Printf("No title provided...")
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No title parameter provided"})
 		return
 	}
 
@@ -127,9 +127,9 @@ func FindBook(c *gin.Context) {
 	// array of books to return
 	var bookDocs []models.Book
 
-	// iterator over books collection in firestore
+	// iterate over books collection in firestore
 	iter := client.Collection("books").Where("Title", "==", title).Documents(ctx)
-	defer iter.Stop() // add to clean up resources
+	defer iter.Stop() // clean up resources
 
 	// loop until all documents matching title are added to books array
 	for {
@@ -153,18 +153,6 @@ func FindBook(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
 }
-
-// 	// Validate Input
-// 	var input models.UpdateBookInput
-// 	if err := c.ShouldBindJSON(&input); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	models.DB.Model(&book).Updates(input)
-
-// 	c.JSON(http.StatusOK, gin.H{"data": book})
-// }
 
 func FindAuthor(c *gin.Context) {
 
