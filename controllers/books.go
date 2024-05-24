@@ -47,7 +47,8 @@ func Ping(c *gin.Context) {
 func FindBooks(c *gin.Context) {
 
 	// create client
-	client := db.CreateFirestoreClient(context.Background())
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
 	// array of books to return
@@ -84,7 +85,8 @@ func FindBooks(c *gin.Context) {
 func CreateBook(c *gin.Context) {
 
 	// create client
-	client := db.CreateFirestoreClient(context.Background())
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
 	// Validate input
@@ -118,7 +120,8 @@ func FindBook(c *gin.Context) {
 	}
 
 	// create client
-	client := db.CreateFirestoreClient(context.Background())
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
 	// array of books to return
@@ -174,7 +177,8 @@ func FindAuthor(c *gin.Context) {
 	}
 
 	// create client
-	client := db.CreateFirestoreClient(context.Background())
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
 	// array of books to return
@@ -222,7 +226,8 @@ func DeleteBook(c *gin.Context) {
 	}
 
 	// create client
-	client := db.CreateFirestoreClient(context.Background())
+	ctx := context.Background()
+	client := db.CreateFirestoreClient(ctx)
 	defer client.Close()
 
 	bulkwriter := client.BulkWriter(ctx)
