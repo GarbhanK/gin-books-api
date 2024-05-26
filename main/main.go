@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"io"
+
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
@@ -9,6 +12,16 @@ import (
 
 func init() {
 	log.SetLevel(log.InfoLevel)
+	debugEnabled := gin.IsDebugging()
+
+	if (!debugEnabled) {
+		// Disable Console Color when running in 'release' mode
+		gin.DisableConsoleColor()
+
+		// Logging to a file.
+		f, _ := os.Create("books.log")
+		gin.DefaultWriter = io.MultiWriter(f)
+	}
 }
 
 func setupRouter() *gin.Engine {
