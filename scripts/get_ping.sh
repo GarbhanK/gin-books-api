@@ -1,2 +1,2 @@
 
-curl localhost:8080/ping | jq
+curl localhost:8080/v1/ping | jq

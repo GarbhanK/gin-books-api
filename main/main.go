@@ -13,14 +13,18 @@ func init() {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	r.GET("/", controllers.Root)
-	r.GET("/ping", controllers.Ping)
-	r.GET("/books", controllers.FindBooks)
-	r.POST("/books", controllers.CreateBook)
-	r.GET("/books/author/", controllers.FindAuthor)
-	r.GET("/books/title/", controllers.FindBook)
-	r.DELETE("/books/", controllers.DeleteBook)
-	// r.PATCH("books/:id", controllers.UpdateBook)
+	v1 := r.Group("/v1")
+	{
+		v1.GET("/", controllers.Root)
+		v1.GET("/ping", controllers.Ping)
+		v1.GET("/books", controllers.FindBooks)
+		v1.POST("/books", controllers.CreateBook)
+		v1.GET("/books/author/", controllers.FindAuthor)
+		v1.GET("/books/title/", controllers.FindBook)
+		v1.DELETE("/books/", controllers.DeleteBook)
+		// v1.PATCH("books/:id", controllers.UpdateBook)
+	}
+
 	return r
 }
 
