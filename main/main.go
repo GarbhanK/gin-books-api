@@ -12,6 +12,11 @@ import (
 
 func init() {
 	log.SetLevel(log.InfoLevel)
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+
 	debugEnabled := gin.IsDebugging()
 
 	if (!debugEnabled) {
