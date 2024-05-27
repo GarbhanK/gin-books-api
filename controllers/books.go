@@ -176,7 +176,6 @@ func FindAuthor(c *gin.Context) {
 
 	// loop until all documents are added to books array
 	for {
-		log.Println("starting the loop...")
 		var authorBooksBuffer models.Book
 
 		doc, err := iter.Next()

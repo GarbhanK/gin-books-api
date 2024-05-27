@@ -1,14 +1,13 @@
 package utils
 
 import (
-	"fmt"
-	"os"
-	"io"
 	"errors"
+	"fmt"
+	"io"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-
 )
 
 func GetParams(c *gin.Context, queryParam string) (string, error) {
@@ -18,11 +17,10 @@ func GetParams(c *gin.Context, queryParam string) (string, error) {
 	if err == false {
 		log.Printf("No title provided...")
 		return "", errors.New("empty name")
-	}	
+	}
 
 	return param, nil
 }
-
 
 func SetupLogging() error {
 	// logrus config
@@ -31,7 +29,7 @@ func SetupLogging() error {
 		DisableColors: false,
 		FullTimestamp: true,
 	})
-	
+
 	switch gin.Mode() {
 	case "debug":
 		fmt.Println("It's debug")
@@ -42,10 +40,10 @@ func SetupLogging() error {
 
 		// Logging to a file.
 		f, _ := os.Create("books.log")
-		gin.DefaultWriter = io.MultiWriter(f)	
+		gin.DefaultWriter = io.MultiWriter(f)
 	default:
 		fmt.Printf("%s is not a recognised mode...", gin.Mode())
 	}
-	
+
 	return nil
 }

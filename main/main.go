@@ -1,7 +1,7 @@
 package main
 
 import (
-	"time"	
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +12,6 @@ import (
 	"github.com/gin-contrib/cache/persistence"
 )
 
-
 func init() {
 	err := utils.SetupLogging()
 	if err != nil {
@@ -20,7 +19,6 @@ func init() {
 	}
 
 }
-
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
