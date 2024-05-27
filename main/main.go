@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	err := utils.SetupLogging()
+	err := utils.SetupLogging("books.log")
 	if err != nil {
 		log.Fatalf("Failed to set up logging, %v\n", err)
 	}

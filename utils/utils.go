@@ -22,7 +22,7 @@ func GetParams(c *gin.Context, queryParam string) (string, error) {
 	return param, nil
 }
 
-func SetupLogging() error {
+func SetupLogging(logFilename string) error {
 	// logrus config
 	log.SetLevel(log.InfoLevel)
 	log.SetFormatter(&log.TextFormatter{
@@ -32,9 +32,9 @@ func SetupLogging() error {
 
 	switch gin.Mode() {
 	case "debug":
-		fmt.Println("It's debug")
+		log.Println("Debug - Writing logs to stdout...")
 	case "release":
-		fmt.Println("release muh")
+		log.Println("Release - writing logs to %s", logFilename)
 		// Disable Console Color when running in 'release' mode
 		gin.DisableConsoleColor()
 
