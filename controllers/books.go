@@ -7,14 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/garbhank/gin-books-api/db"
-	"github.com/garbhank/gin-books-api/models"
-
 	"github.com/gin-gonic/gin"
 	_ "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
+
+	"github.com/garbhank/gin-books-api/db"
+	"github.com/garbhank/gin-books-api/models"
+	"github.com/garbhank/gin-books-api/utils"
 )
 
+// GET /
 func Root(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "I am root"})
 }
@@ -111,7 +113,7 @@ func CreateBook(c *gin.Context) {
 // Find a specific book
 func FindBook(c *gin.Context) {
 	// parse out author name in query params
-	title, err := getParams(c, "title")
+	title, err := utils.GetParams(c, "title")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
@@ -155,7 +157,7 @@ func FindBook(c *gin.Context) {
 func FindAuthor(c *gin.Context) {
 
 	// parse out author name in query params
-	author, err := getParams(c, "name")
+	author, err := utils.GetParams(c, "name")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'name' parameter provided"})
 		return
@@ -201,7 +203,7 @@ func FindAuthor(c *gin.Context) {
 // Delete a book by title
 func DeleteBook(c *gin.Context) {
 	// parse out author name in query params
-	title, err := getParams(c, "title")
+	title, err := utils.GetParams(c, "title")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return

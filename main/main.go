@@ -1,38 +1,26 @@
 package main
 
 import (
-	"os"
-	"io"
-	"time"
+	"time"	
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/garbhank/gin-books-api/controllers"
+	"github.com/garbhank/gin-books-api/utils"
 	"github.com/gin-contrib/cache"
 	"github.com/gin-contrib/cache/persistence"
 )
 
 
-
 func init() {
-	log.SetLevel(log.InfoLevel)
-	log.SetFormatter(&log.TextFormatter{
-		DisableColors: false,
-		FullTimestamp: true,
-	})
-
-	debugEnabled := gin.IsDebugging()
-
-	if (!debugEnabled) {
-		// Disable Console Color when running in 'release' mode
-		gin.DisableConsoleColor()
-
-		// Logging to a file.
-		f, _ := os.Create("books.log")
-		gin.DefaultWriter = io.MultiWriter(f)
+	err := utils.SetupLogging()
+	if err != nil {
+		log.Fatalf("Failed to set up logging, %v\n", err)
 	}
+
 }
+
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
@@ -51,7 +39,6 @@ func setupRouter() *gin.Engine {
 		v1.DELETE("/books/", controllers.DeleteBook)
 		// v1.PATCH("books/:id", controllers.UpdateBook)
 	}
-
 
 	return r
 }
