@@ -104,7 +104,8 @@ func CreateBook(c *gin.Context) {
 		log.Fatalf("Failed adding document:\n%v", err)
 	}
 
-	book := models.Book{Title: newBook.Title, Author: newBook.Author}
+	// book := models.Book{Title: newBook.Title, Author: newBook.Author}
+	book := models.Book(newBook)
 
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }

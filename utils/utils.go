@@ -14,7 +14,7 @@ func GetParams(c *gin.Context, queryParam string) (string, error) {
 	log.Printf("Query Param: %v", c.Query(queryParam))
 
 	param, err := c.GetQuery(queryParam)
-	if err == false {
+	if !err {
 		log.Printf("No title provided...")
 		return "", errors.New("empty name")
 	}
@@ -32,9 +32,9 @@ func SetupLogging(logFilename string) error {
 
 	switch gin.Mode() {
 	case "debug":
-		log.Println("Debug - Writing logs to stdout...")
+		log.Printf("Debug - Writing logs to stdout...\n")
 	case "release":
-		log.Println("Release - writing logs to %s", logFilename)
+		log.Printf("Release - writing logs to %s\n", logFilename)
 		// Disable Console Color when running in 'release' mode
 		gin.DisableConsoleColor()
 

@@ -26,7 +26,7 @@ func setupRouter() *gin.Engine {
 	store := persistence.NewInMemoryStore(time.Second)
 	ttl := time.Minute * 1 // todo: os.GetEnv
 
-	v1 := r.Group("/v1")
+	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/", controllers.Root)
 		v1.GET("/ping", controllers.Ping)

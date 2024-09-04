@@ -1,2 +1,2 @@
 
- curl localhost:8080/v1/books/title/?title=Fictions | jq
+ curl localhost:8080/api/v1/books/title/?title=Fictions | jq
