@@ -11,13 +11,6 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type DB interface {
-	Conn()
-	Insert()
-	Get()
-	Delete()
-}
-
 type Firestore struct {
 	Client    firestore.Client
 	projectId string
@@ -51,12 +44,12 @@ func (f Firestore) Conn(ctx context.Context) error {
 	return nil
 }
 
-func (f Firestore) Get(ctx context.Context, col string, key string, val string) ([]models.Book, error) {
+func (f Firestore) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
 	// create Books slice
 	var bookDocs []models.Book
 
 	// iterate over books collection in firestore
-	iter := f.Client.Collection(col).Where(key, "==", val).Documents(ctx)
+	iter := f.Client.Collection(table).Where(key, "==", val).Documents(ctx)
 	defer iter.Stop() // clean up resources
 
 	// loop until all documents matching title are added to books array
@@ -84,9 +77,9 @@ func (f Firestore) Get(ctx context.Context, col string, key string, val string) 
 	return bookDocs, nil
 }
 
-func (f Firestore) Insert(ctx context.Context, col string, data models.InsertBookInput) (models.Book, error) {
+func (f Firestore) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
 	// create a DocumentReference
-	_, _, err := f.Client.Collection(col).Add(ctx, data)
+	_, _, err := f.Client.Collection(table).Add(ctx, data)
 	if err != nil {
 		log.Printf("Failed adding document:\n%v", err)
 		return models.Book{}, err
@@ -95,11 +88,11 @@ func (f Firestore) Insert(ctx context.Context, col string, data models.InsertBoo
 	return models.Book(data), nil
 }
 
-func (f Firestore) Drop(ctx context.Context, col string, key string, val string) error {
+func (f Firestore) Drop(ctx context.Context, table, key, val string) error {
 	bulkwriter := f.Client.BulkWriter(ctx)
 
 	for {
-		iter := f.Client.Collection(col).Where(key, "==", val).Documents(ctx)
+		iter := f.Client.Collection(table).Where(key, "==", val).Documents(ctx)
 		numDeleted := 0
 
 		for {
@@ -120,7 +113,7 @@ func (f Firestore) Drop(ctx context.Context, col string, key string, val string)
 
 			// lowercase titles for matching book titles
 			valueLower := strings.ToLower(val)
-			// TODO: looks like this won't work
+			// TODO: use utils.GetField() for grabbing struct field by string
 			parsedFirebaseTitle := strings.ToLower(bookBuffer.Title)
 			if parsedFirebaseTitle == valueLower {
 				bulkwriter.Delete(doc.Ref)

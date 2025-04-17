@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/firestore v1.14.0
 	github.com/gin-contrib/cache v1.3.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.128.0

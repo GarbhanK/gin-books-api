@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -46,4 +47,21 @@ func SetupLogging(logFilename string) error {
 	}
 
 	return nil
+}
+
+func GetField(obj any, fieldName string) (any, error) {
+	// use reflection to grab struct field value by name
+	val := reflect.ValueOf(obj)
+
+	// If pointer, resolve
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	field := val.FieldByName(fieldName)
+	if !field.IsValid() {
+		return nil, fmt.Errorf("no such field: %s", fieldName)
+	}
+
+	return field.Interface(), nil
 }

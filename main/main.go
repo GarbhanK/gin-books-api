@@ -1,16 +1,20 @@
 package main
 
 import (
+	"flag"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/garbhank/gin-books-api/controllers"
+	"github.com/garbhank/gin-books-api/database"
 	"github.com/garbhank/gin-books-api/utils"
 	"github.com/gin-contrib/cache"
 	"github.com/gin-contrib/cache/persistence"
 )
+
+var db database.Database
 
 func init() {
 	err := utils.SetupLogging("books.log")
@@ -22,27 +26,42 @@ func init() {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
+
 	// cache endpoints which calls the Firestore db
 	store := persistence.NewInMemoryStore(time.Second)
 	ttl := time.Minute * 1 // todo: os.GetEnv
 
+	dbType := flag.String("db", "memory", "Database type: 'memory', 'firestore', or 'postgres'")
+	flag.Parse()
+
+	switch *dbType {
+	case "firestore":
+		db = database.NewFirestore()
+	case "memory":
+		db = database.NewMemoryDB()
+	// case "postgres":
+	// 	db = database.NewPostgres()
+	default:
+		log.Fatalf("Unknown DB type: %s", *dbType)
+	}
+
+	handler := controllers.NewHandler(db)
+
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/", controllers.Root)
-		v1.GET("/ping", controllers.Ping)
-		v1.GET("/books", cache.CachePage(store, ttl, controllers.FindBooks))
-		v1.GET("/books/author/", cache.CachePage(store, ttl, controllers.FindAuthor))
-		v1.GET("/books/title/", cache.CachePage(store, ttl, controllers.FindBook))
-		v1.POST("/books", controllers.CreateBook)
-		v1.DELETE("/books/", controllers.DeleteBook)
-		// v1.PATCH("books/:id", controllers.UpdateBook)
+		v1.GET("/", handler.Root)
+		v1.GET("/ping", handler.Ping)
+		v1.GET("/books", cache.CachePage(store, ttl, handler.FindBooks))
+		v1.GET("/books/author/", cache.CachePage(store, ttl, handler.FindAuthor))
+		v1.GET("/books/title/", cache.CachePage(store, ttl, handler.FindBook))
+		v1.POST("/books", handler.CreateBook)
+		v1.DELETE("/books/", handler.DeleteBook)
 	}
 
 	return r
 }
 
 func main() {
-
 	r := setupRouter()
 
 	err := r.Run(":8080")

@@ -15,14 +15,22 @@ import (
 	"github.com/garbhank/gin-books-api/utils"
 )
 
+type Handler struct {
+	db database.Database
+}
+
+func NewHandler(dbType database.Database) *Handler {
+	return &Handler{db: dbType}
+}
+
 // GET /
-func Root(c *gin.Context) {
+func (h *Handler) Root(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "I am root"})
 }
 
 // GET /ping
 // get server status
-func Ping(c *gin.Context) {
+func (h *Handler) Ping(c *gin.Context) {
 	currentTime := time.Now()
 	connectToDatabase := "unable to connect!"
 
@@ -49,7 +57,7 @@ func Ping(c *gin.Context) {
 
 // GET /books
 // Get all books
-func FindBooks(c *gin.Context) {
+func (h *Handler) FindBooks(c *gin.Context) {
 	ctx := context.Background()
 
 	// create client
@@ -91,7 +99,7 @@ func FindBooks(c *gin.Context) {
 
 // POST /books
 // Create new book
-func CreateBook(c *gin.Context) {
+func (h *Handler) CreateBook(c *gin.Context) {
 	ctx := context.Background()
 
 	// create client
@@ -119,7 +127,7 @@ func CreateBook(c *gin.Context) {
 
 // GET /books/title/
 // Find a specific book
-func FindBook(c *gin.Context) {
+func (h *Handler) FindBook(c *gin.Context) {
 	ctx := context.Background()
 
 	// parse out author name in query params
@@ -146,7 +154,7 @@ func FindBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
 }
 
-func FindAuthor(c *gin.Context) {
+func (h *Handler) FindAuthor(c *gin.Context) {
 	ctx := context.Background()
 
 	// parse out author name in query params
@@ -174,7 +182,7 @@ func FindAuthor(c *gin.Context) {
 }
 
 // Delete a book by title
-func DeleteBook(c *gin.Context) {
+func (h *Handler) DeleteBook(c *gin.Context) {
 	ctx := context.Background()
 
 	// parse out author name in query params
