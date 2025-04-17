@@ -6,12 +6,12 @@ type Book struct {
 }
 
 type Status struct {
-	Timestamp       string `json:"timestamp"`
-	APIStatus       string `json:"status"`
-	FirestoreStatus string `json:"firestore_status"`
+	Timestamp string `json:"timestamp"`
+	APIStatus string `json:"status"`
+	DBStatus  string `json:"firestore_status"`
 }
 
-type CreateBookInput struct {
+type InsertBookInput struct {
 	Title  string `json:"title" binding:"required"`
 	Author string `json:"author" binding:"required"`
 }

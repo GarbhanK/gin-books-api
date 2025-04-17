@@ -4,14 +4,13 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 
-	"github.com/garbhank/gin-books-api/db"
+	"github.com/garbhank/gin-books-api/database"
 	"github.com/garbhank/gin-books-api/models"
 	"github.com/garbhank/gin-books-api/utils"
 )
@@ -25,20 +24,24 @@ func Root(c *gin.Context) {
 // get server status
 func Ping(c *gin.Context) {
 	currentTime := time.Now()
-	connectToFirestore := "unable to connect!"
+	connectToDatabase := "unable to connect!"
 
 	// create client
-	client := db.CreateFirestoreClient(context.Background())
-	if client != nil {
-		connectToFirestore = "ok"
+	db := database.NewFirestore()
+	err := db.Conn(context.Background())
+	if err != nil {
+		log.Fatal(err)
 	}
-	defer client.Close()
+	defer db.Client.Close()
 
-	// put stuff here to ping firestore db
+	// TODO: properly check connection
+	connectToDatabase = "ok"
+
+	// put stuff here to ping the db
 	var status = models.Status{
-		Timestamp:       currentTime.Format("2006-01-02 15:04:05"),
-		APIStatus:       "ok",
-		FirestoreStatus: connectToFirestore,
+		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
+		APIStatus: "ok",
+		DBStatus:  connectToDatabase,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": status})
@@ -47,17 +50,21 @@ func Ping(c *gin.Context) {
 // GET /books
 // Get all books
 func FindBooks(c *gin.Context) {
+	ctx := context.Background()
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
-	defer client.Close()
+	db := database.NewFirestore()
+	err := db.Conn(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Client.Close()
 
 	// array of books to return
 	var firestoreBooks []models.Book
 
 	// iterator over books collection in firestore
-	iter := client.Collection("books").Documents(ctx)
+	iter := db.Client.Collection("books").Documents(ctx)
 	defer iter.Stop() // add to clean up resources
 
 	// loop until all documents are added to books array
@@ -85,27 +92,27 @@ func FindBooks(c *gin.Context) {
 // POST /books
 // Create new book
 func CreateBook(c *gin.Context) {
+	ctx := context.Background()
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
-	defer client.Close()
+	db := database.NewFirestore()
+	err := db.Conn(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Client.Close()
 
 	// Validate input
-	var newBook models.CreateBookInput
+	var newBook models.InsertBookInput
 	if err := c.ShouldBindJSON(&newBook); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// create a DocumentReference
-	_, _, err := client.Collection("books").Add(ctx, newBook)
+	book, err := db.Insert(ctx, "books", newBook)
 	if err != nil {
-		log.Fatalf("Failed adding document:\n%v", err)
+		log.Fatal(err)
 	}
-
-	// book := models.Book{Title: newBook.Title, Author: newBook.Author}
-	book := models.Book(newBook)
 
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
@@ -113,49 +120,34 @@ func CreateBook(c *gin.Context) {
 // GET /books/title/
 // Find a specific book
 func FindBook(c *gin.Context) {
+	ctx := context.Background()
+
 	// parse out author name in query params
-	title, err := utils.GetParams(c, "title")
+	bookTitle, err := utils.GetParams(c, "title")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
 	}
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
-	defer client.Close()
+	db := database.NewFirestore()
+	err = db.Conn(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Client.Close()
 
 	// array of books to return
-	var bookDocs []models.Book
-
-	// iterate over books collection in firestore
-	iter := client.Collection("books").Where("Title", "==", title).Documents(ctx)
-	defer iter.Stop() // clean up resources
-
-	// loop until all documents matching title are added to books array
-	for {
-		var booksBuffer models.Book
-
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Fatalf("Failed to iterate:\n%v", err)
-		}
-
-		log.Println(doc.Data())
-		if err := doc.DataTo(&booksBuffer); err != nil {
-			log.Fatalf("can't cast docsnap to Book:\n%v", err)
-		}
-
-		bookDocs = append(bookDocs, booksBuffer)
+	bookDocs, err := db.Get(ctx, "books", "title", bookTitle)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
 }
 
 func FindAuthor(c *gin.Context) {
+	ctx := context.Background()
 
 	// parse out author name in query params
 	author, err := utils.GetParams(c, "name")
@@ -165,36 +157,17 @@ func FindAuthor(c *gin.Context) {
 	}
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
-	defer client.Close()
+	db := database.NewFirestore()
+	err = db.Conn(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Client.Close()
 
 	// array of books to return
-	var authorBooks []models.Book
-
-	iter := client.Collection("books").Where("Author", "==", author).Documents(ctx)
-	defer iter.Stop() // add to clean up resources
-
-	// loop until all documents are added to books array
-	for {
-		var authorBooksBuffer models.Book
-
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Fatalf("Failed to iterate:\n%v", err)
-		}
-
-		log.Println(doc.Data())
-
-		if err := doc.DataTo(&authorBooksBuffer); err != nil {
-			log.Fatalf("can't cast docsnap to Book:\n%v", err)
-		}
-
-		// append record to return array
-		authorBooks = append(authorBooks, authorBooksBuffer)
+	authorBooks, err := db.Get(ctx, "books", "Author", author)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
@@ -202,6 +175,8 @@ func FindAuthor(c *gin.Context) {
 
 // Delete a book by title
 func DeleteBook(c *gin.Context) {
+	ctx := context.Background()
+
 	// parse out author name in query params
 	title, err := utils.GetParams(c, "title")
 	if err != nil {
@@ -210,49 +185,17 @@ func DeleteBook(c *gin.Context) {
 	}
 
 	// create client
-	ctx := context.Background()
-	client := db.CreateFirestoreClient(ctx)
-	defer client.Close()
+	db := database.NewFirestore()
+	err = db.Conn(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Client.Close()
 
-	bulkwriter := client.BulkWriter(ctx)
-
-	for {
-		iter := client.Collection("books").Where("Title", "==", title).Documents(ctx)
-		numDeleted := 0
-
-		for {
-			var booksBuffer models.Book
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				log.Fatalf("Failed to iterate:\n%v", err)
-			}
-
-			log.Println(doc.Data())
-
-			if err := doc.DataTo(&booksBuffer); err != nil {
-				log.Fatalf("can't cast docsnap to Book:\n%v", err)
-			}
-
-			// lowercase titles for matching book titles
-			titleLower := strings.ToLower(title)
-			parsedFirebaseTitle := strings.ToLower(booksBuffer.Title)
-			if parsedFirebaseTitle == titleLower {
-				bulkwriter.Delete(doc.Ref)
-				numDeleted++
-			}
-		}
-
-		// if there are no docs to delete, process over
-		if numDeleted == 0 {
-			bulkwriter.End()
-			return
-		}
-		bulkwriter.Flush()
+	err = db.Drop(ctx, "books", "Title", title)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	log.Printf("Deleted record: %s", title)
 	c.JSON(http.StatusOK, gin.H{"data": true})
 }
