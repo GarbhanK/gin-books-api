@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"strings"
@@ -41,6 +42,15 @@ func (f Firestore) Conn(ctx context.Context) error {
 
 	// add client to db struct
 	f.Client = *fs_client
+	return nil
+}
+
+func (f Firestore) Close() error {
+	err := f.Client.Close()
+	if err != nil {
+		return errors.New("Unable to close database connection with Firestore")
+	}
+
 	return nil
 }
 

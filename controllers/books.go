@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -35,12 +36,11 @@ func (h *Handler) Ping(c *gin.Context) {
 	connectToDatabase := "unable to connect!"
 
 	// create client
-	db := database.NewFirestore()
-	err := db.Conn(context.Background())
+	err := h.db.Conn(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Client.Close()
+	defer h.db.Close()
 
 	// TODO: properly check connection
 	connectToDatabase = "ok"
@@ -103,12 +103,11 @@ func (h *Handler) CreateBook(c *gin.Context) {
 	ctx := context.Background()
 
 	// create client
-	db := database.NewFirestore()
-	err := db.Conn(ctx)
+	err := h.db.Conn(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Client.Close()
+	defer h.db.Close()
 
 	// Validate input
 	var newBook models.InsertBookInput
@@ -117,7 +116,7 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		return
 	}
 
-	book, err := db.Insert(ctx, "books", newBook)
+	book, err := h.db.Insert(ctx, "books", newBook)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -132,21 +131,21 @@ func (h *Handler) FindBook(c *gin.Context) {
 
 	// parse out author name in query params
 	bookTitle, err := utils.GetParams(c, "title")
+	fmt.Printf("bookTitle: %s\n", bookTitle)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
 	}
 
 	// create client
-	db := database.NewFirestore()
-	err = db.Conn(ctx)
+	err = h.db.Conn(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Client.Close()
+	defer h.db.Close()
 
 	// array of books to return
-	bookDocs, err := db.Get(ctx, "books", "title", bookTitle)
+	bookDocs, err := h.db.Get(ctx, "books", "title", bookTitle)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -165,15 +164,14 @@ func (h *Handler) FindAuthor(c *gin.Context) {
 	}
 
 	// create client
-	db := database.NewFirestore()
-	err = db.Conn(ctx)
+	err = h.db.Conn(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Client.Close()
+	defer h.db.Close()
 
 	// array of books to return
-	authorBooks, err := db.Get(ctx, "books", "Author", author)
+	authorBooks, err := h.db.Get(ctx, "books", "Author", author)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -193,14 +191,13 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 	}
 
 	// create client
-	db := database.NewFirestore()
-	err = db.Conn(ctx)
+	err = h.db.Conn(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Client.Close()
+	defer h.db.Close()
 
-	err = db.Drop(ctx, "books", "Title", title)
+	err = h.db.Drop(ctx, "books", "Title", title)
 	if err != nil {
 		log.Fatal(err)
 	}

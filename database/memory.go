@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 
@@ -12,34 +13,57 @@ import (
 
 // fake in memory db for demo/testing
 type MemoryDB struct {
-	data map[string][]models.Book
-	mu   sync.RWMutex
+	Client *map[string][]models.Book
+	mu     sync.RWMutex
 }
 
 func NewMemoryDB() *MemoryDB {
-	return &MemoryDB{}
+	memoryMap := make(map[string][]models.Book)
+	return &MemoryDB{
+		Client: &memoryMap,
+	}
 }
 
 func (m *MemoryDB) Conn(ctx context.Context) error {
-	m.data = make(map[string][]models.Book)
+	if m.Client == nil {
+		return errors.New("No in-memory database found!")
+	}
+	fmt.Println(m.Client)
 	return nil
 }
 
-func (m *MemoryDB) Insert(ctx context.Context, table string, data models.InsertBookInput) error {
+func (m *MemoryDB) Close() error {
+	clear(*m.Client)
+	if len(*m.Client) != 0 {
+		return errors.New("Failed to close DB connection")
+	}
+
+	return nil
+}
+
+func (m *MemoryDB) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.data[table] = append(m.data[table], models.Book(data))
-	return nil
+	memoryMap := *m.Client
+	storedBooks := memoryMap[table]
+	bookData := models.Book(data)
+	storedBooks = append(storedBooks, bookData)
+
+	fmt.Printf("insert map: %v\n", m.Client)
+	fmt.Printf("insert map table: %v\n", storedBooks)
+	return bookData, nil
 }
 
 func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	books, ok := m.data[table]
+	fmt.Printf("map: %v\n", m.Client)
+
+	books, ok := m.Client[table]
 	if !ok {
-		return []models.Book{}, errors.New("not found")
+		return []models.Book{}, fmt.Errorf("Data not found for: %v", key)
 	}
 
 	// filter books array
@@ -62,10 +86,6 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 func (m *MemoryDB) Drop(ctx context.Context, table, key, val string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	delete(m.data, key)
-	return nil
-}
-
-func (m *MemoryDB) Close() error {
+	delete(m.Client, key)
 	return nil
 }

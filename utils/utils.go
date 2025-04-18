@@ -12,6 +12,7 @@ import (
 )
 
 func GetParams(c *gin.Context, queryParam string) (string, error) {
+	// get the value from the url parameters
 	log.Printf("Query Param: %v", c.Query(queryParam))
 
 	param, err := c.GetQuery(queryParam)

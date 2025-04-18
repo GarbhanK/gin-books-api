@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/garbhank/gin-books-api/controllers"
+	"github.com/garbhank/gin-books-api/database"
 	"github.com/garbhank/gin-books-api/models"
 )
 
@@ -17,7 +19,8 @@ type PingStatusTest struct {
 }
 
 func TestPingRoute(t *testing.T) {
-	router := setupRouter()
+	handler := controllers.NewHandler(&database.MemoryDB{})
+	router := setupRouter(*handler)
 	currentTime := time.Now()
 
 	w := httptest.NewRecorder()

@@ -7,8 +7,8 @@ type Book struct {
 
 type Status struct {
 	Timestamp string `json:"timestamp"`
-	APIStatus string `json:"status"`
-	DBStatus  string `json:"firestore_status"`
+	APIStatus string `json:"api_status"`
+	DBStatus  string `json:"database_status"`
 }
 
 type InsertBookInput struct {

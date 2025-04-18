@@ -24,28 +24,12 @@ func init() {
 
 }
 
-func setupRouter() *gin.Engine {
+func setupRouter(handler controllers.Handler) *gin.Engine {
 	r := gin.Default()
 
 	// cache endpoints which calls the Firestore db
 	store := persistence.NewInMemoryStore(time.Second)
 	ttl := time.Minute * 1 // todo: os.GetEnv
-
-	dbType := flag.String("db", "memory", "Database type: 'memory', 'firestore', or 'postgres'")
-	flag.Parse()
-
-	switch *dbType {
-	case "firestore":
-		db = database.NewFirestore()
-	case "memory":
-		db = database.NewMemoryDB()
-	// case "postgres":
-	// 	db = database.NewPostgres()
-	default:
-		log.Fatalf("Unknown DB type: %s", *dbType)
-	}
-
-	handler := controllers.NewHandler(db)
 
 	v1 := r.Group("/api/v1")
 	{
@@ -62,7 +46,23 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
-	r := setupRouter()
+	// parse command line flags
+	dbType := flag.String("db", "memory", "Database type: 'memory', 'firestore', or 'postgres'")
+	flag.Parse()
+
+	switch *dbType {
+	case "firestore":
+		db = database.NewFirestore()
+	case "memory":
+		db = database.NewMemoryDB()
+	// case "postgres":
+	// 	db = database.NewPostgres()
+	default:
+		log.Fatalf("Unknown DB type: %s", *dbType)
+	}
+
+	handler := controllers.NewHandler(db)
+	r := setupRouter(*handler)
 
 	err := r.Run(":8080")
 	if err != nil {
