@@ -145,7 +145,7 @@ func (h *Handler) FindBook(c *gin.Context) {
 	defer h.db.Close()
 
 	// array of books to return
-	bookDocs, err := h.db.Get(ctx, "books", "title", bookTitle)
+	bookDocs, err := h.db.Get(ctx, "books", "Title", bookTitle)
 	if err != nil {
 		log.Fatal(err)
 	}

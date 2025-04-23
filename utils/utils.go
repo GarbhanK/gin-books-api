@@ -52,17 +52,20 @@ func SetupLogging(logFilename string) error {
 
 func GetField(obj any, fieldName string) (any, error) {
 	// use reflection to grab struct field value by name
-	val := reflect.ValueOf(obj)
+	v := reflect.ValueOf(obj)
+	fmt.Printf("GetField val: %v\n", v)
 
-	// If pointer, resolve
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
+	v = reflect.Indirect(v)
 
-	field := val.FieldByName(fieldName)
-	if !field.IsValid() {
+	// // If pointer, resolve
+	// if v.Kind() == reflect.Ptr {
+	// 	v = v.Elem()
+	// }
+
+	fieldVal := v.FieldByName(fieldName)
+	if !fieldVal.IsValid() {
 		return nil, fmt.Errorf("no such field: %s", fieldName)
 	}
 
-	return field.Interface(), nil
+	return fieldVal.Interface(), nil
 }

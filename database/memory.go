@@ -13,14 +13,15 @@ import (
 
 // fake in memory db for demo/testing
 type MemoryDB struct {
-	Client *map[string][]models.Book
+	Client map[string][]models.Book
 	mu     sync.RWMutex
 }
 
 func NewMemoryDB() *MemoryDB {
+	fmt.Println("Creating new memoryBD...")
 	memoryMap := make(map[string][]models.Book)
 	return &MemoryDB{
-		Client: &memoryMap,
+		Client: memoryMap,
 	}
 }
 
@@ -28,15 +29,15 @@ func (m *MemoryDB) Conn(ctx context.Context) error {
 	if m.Client == nil {
 		return errors.New("No in-memory database found!")
 	}
-	fmt.Println(m.Client)
+	fmt.Printf("Connected to MemoryDB! :: %v\n", m.Client)
 	return nil
 }
 
 func (m *MemoryDB) Close() error {
-	clear(*m.Client)
-	if len(*m.Client) != 0 {
-		return errors.New("Failed to close DB connection")
-	}
+	// clear(m.Client)
+	// if len(m.Client) != 0 {
+	// 	return errors.New("Failed to close DB connection")
+	// }
 
 	return nil
 }
@@ -44,15 +45,16 @@ func (m *MemoryDB) Close() error {
 func (m *MemoryDB) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	fmt.Printf("insert map before: %v\n", m.Client)
 
-	memoryMap := *m.Client
-	storedBooks := memoryMap[table]
-	bookData := models.Book(data)
-	storedBooks = append(storedBooks, bookData)
+	// create new book struct
+	newBook := models.Book(data)
 
-	fmt.Printf("insert map: %v\n", m.Client)
-	fmt.Printf("insert map table: %v\n", storedBooks)
-	return bookData, nil
+	// append new book to the 'table' array
+	m.Client[table] = append(m.Client[table], newBook)
+
+	fmt.Printf("insert map after: %v\n", m.Client)
+	return newBook, nil
 }
 
 func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
@@ -67,14 +69,16 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 	}
 
 	// filter books array
-	matchingBooks := []models.Book{}
+	var matchingBooks []models.Book
+
 	for _, book := range books {
 		// use reflect to get struct field by string
-		fieldValue, err := utils.GetField(models.Book{}, key)
+		fieldValue, err := utils.GetField(book, key)
 		if err != nil {
 			log.Printf("Error: %v", err)
 		}
 
+		fmt.Printf("fieldValue: %s\n", fieldValue)
 		if fieldValue == val {
 			matchingBooks = append(matchingBooks, book)
 		}
