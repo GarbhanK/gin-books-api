@@ -10,14 +10,16 @@ echo "Pinging the API..."
 curl localhost:8080/api/v1/ping | jq
 
 
-echo "Inserting book..."
+echo "Inserting first book..."
 curl -X POST localhost:8080/api/v1/books \
     -H 'Content-Type: application/json' \
     -d "{\"Author\":\"${author}\",\"Title\":\"${book_title}\"}"
 
+echo "Inserting second book..."
+curl -X POST localhost:8080/api/v1/books \
+    -H 'Content-Type: application/json' \
+    -d "{\"Author\":\"${author}\",\"Title\":\"The Aleph\"}"
 
 echo ""
 echo "Searching for book title..."
 curl "localhost:8080/api/v1/books/title/?title=${book_title}" | jq
-
-

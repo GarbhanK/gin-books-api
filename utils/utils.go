@@ -44,7 +44,7 @@ func SetupLogging(logFilename string) error {
 		f, _ := os.Create("books.log")
 		gin.DefaultWriter = io.MultiWriter(f)
 	default:
-		fmt.Printf("%s is not a recognised mode...", gin.Mode())
+		log.Printf("%s is not a recognised mode...", gin.Mode())
 	}
 
 	return nil
@@ -53,14 +53,10 @@ func SetupLogging(logFilename string) error {
 func GetField(obj any, fieldName string) (any, error) {
 	// use reflection to grab struct field value by name
 	v := reflect.ValueOf(obj)
-	fmt.Printf("GetField val: %v\n", v)
+	log.Printf("GetField val: %v\n", v)
 
+	// get the value from the reflected value points to
 	v = reflect.Indirect(v)
-
-	// // If pointer, resolve
-	// if v.Kind() == reflect.Ptr {
-	// 	v = v.Elem()
-	// }
 
 	fieldVal := v.FieldByName(fieldName)
 	if !fieldVal.IsValid() {

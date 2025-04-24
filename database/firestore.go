@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -98,7 +99,7 @@ func (f Firestore) Insert(ctx context.Context, table string, data models.InsertB
 	return models.Book(data), nil
 }
 
-func (f Firestore) Drop(ctx context.Context, table, key, val string) error {
+func (f Firestore) Drop(ctx context.Context, table, key, val string) (int, error) {
 	bulkwriter := f.Client.BulkWriter(ctx)
 
 	for {
@@ -107,9 +108,12 @@ func (f Firestore) Drop(ctx context.Context, table, key, val string) error {
 
 		for {
 			var bookBuffer models.Book
+
 			doc, err := iter.Next()
 			if err == iterator.Done {
-				break
+				bulkwriter.End()
+				bulkwriter.Flush()
+				return numDeleted, nil
 			}
 			if err != nil {
 				log.Fatalf("Failed to iterate:\n%v", err)
@@ -118,7 +122,7 @@ func (f Firestore) Drop(ctx context.Context, table, key, val string) error {
 			log.Println(doc.Data())
 
 			if err := doc.DataTo(&bookBuffer); err != nil {
-				log.Fatalf("Can't cast docsnap to Book:\n%v", err)
+				return numDeleted, fmt.Errorf("Can't cast docsnap to Book: %v\n", err)
 			}
 
 			// lowercase titles for matching book titles
@@ -131,12 +135,9 @@ func (f Firestore) Drop(ctx context.Context, table, key, val string) error {
 				numDeleted++
 			}
 		}
-
-		// if there are no docs to delete, process over
-		if numDeleted == 0 {
-			bulkwriter.End()
-			return nil
-		}
-		bulkwriter.Flush()
 	}
+}
+
+func (f Firestore) All(ctx context.Context, table string) ([]models.Book, error) {
+	return []models.Book{}, nil
 }

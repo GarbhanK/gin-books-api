@@ -17,9 +17,17 @@ type MemoryDB struct {
 	mu     sync.RWMutex
 }
 
-func NewMemoryDB() *MemoryDB {
-	fmt.Println("Creating new memoryBD...")
-	memoryMap := make(map[string][]models.Book)
+func NewMemoryDB(data map[string][]models.Book) *MemoryDB {
+	log.Println("Creating new memoryBD...")
+	var memoryMap map[string][]models.Book
+
+	// if no seed data provided, init a new map
+	if data == nil {
+		memoryMap = make(map[string][]models.Book)
+	} else {
+		memoryMap = data
+	}
+
 	return &MemoryDB{
 		Client: memoryMap,
 	}
@@ -34,18 +42,14 @@ func (m *MemoryDB) Conn(ctx context.Context) error {
 }
 
 func (m *MemoryDB) Close() error {
-	// clear(m.Client)
-	// if len(m.Client) != 0 {
-	// 	return errors.New("Failed to close DB connection")
-	// }
-
+	// Map will be cleaned up by the GC, no manual `clear()` needed
 	return nil
 }
 
 func (m *MemoryDB) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	fmt.Printf("insert map before: %v\n", m.Client)
+	log.Printf("insert map before: %v\n", m.Client)
 
 	// create new book struct
 	newBook := models.Book(data)
@@ -53,7 +57,7 @@ func (m *MemoryDB) Insert(ctx context.Context, table string, data models.InsertB
 	// append new book to the 'table' array
 	m.Client[table] = append(m.Client[table], newBook)
 
-	fmt.Printf("insert map after: %v\n", m.Client)
+	log.Printf("insert map after: %v\n", m.Client)
 	return newBook, nil
 }
 
@@ -61,24 +65,23 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	fmt.Printf("map: %v\n", m.Client)
+	log.Printf("map: %v\n", m.Client)
 
 	books, ok := m.Client[table]
 	if !ok {
 		return []models.Book{}, fmt.Errorf("Data not found for: %v", key)
 	}
 
-	// filter books array
-	var matchingBooks []models.Book
+	matchingBooks := []models.Book{}
 
+	// filter books array
 	for _, book := range books {
 		// use reflect to get struct field by string
 		fieldValue, err := utils.GetField(book, key)
 		if err != nil {
-			log.Printf("Error: %v", err)
+			return nil, fmt.Errorf("Error: %v", err)
 		}
 
-		fmt.Printf("fieldValue: %s\n", fieldValue)
 		if fieldValue == val {
 			matchingBooks = append(matchingBooks, book)
 		}
@@ -87,9 +90,42 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 	return matchingBooks, nil
 }
 
-func (m *MemoryDB) Drop(ctx context.Context, table, key, val string) error {
+func (m *MemoryDB) Drop(ctx context.Context, table, key, val string) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	delete(m.Client, key)
-	return nil
+	var booksFound int = 0
+	var filteredBooks []models.Book
+
+	log.Printf("pre drop map: %v\n", m.Client[table])
+
+	for _, book := range m.Client[table] {
+		// get book field value
+		fieldValue, err := utils.GetField(book, key)
+		if err != nil {
+			return booksFound, fmt.Errorf("Error: %v", err)
+		}
+
+		// if value matches, don't append to the output array
+		if fieldValue == val {
+			log.Printf("Book to delete: %v\n", book)
+			booksFound += 1
+			continue
+		}
+
+		// if it's not to be deleted, add it to the re-created array
+		filteredBooks = append(filteredBooks, book)
+	}
+
+	m.Client[table] = filteredBooks
+	log.Printf("Post-drop post-loop map: %v\n", m.Client[table])
+	return booksFound, nil
+}
+
+func (m *MemoryDB) All(ctx context.Context, table string) ([]models.Book, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	allRecords := m.Client[table]
+
+	return allRecords, nil
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/sirupsen/logrus"
-	"google.golang.org/api/iterator"
 
 	"github.com/garbhank/gin-books-api/database"
 	"github.com/garbhank/gin-books-api/models"
@@ -55,46 +54,31 @@ func (h *Handler) Ping(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": status})
 }
 
-// GET /books
+// GET /books/?table=books
 // Get all books
-func (h *Handler) FindBooks(c *gin.Context) {
+func (h *Handler) GetAllBooks(c *gin.Context) {
 	ctx := context.Background()
-
 	// create client
-	db := database.NewFirestore()
-	err := db.Conn(ctx)
+	err := h.db.Conn(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Client.Close()
+	defer h.db.Close()
 
-	// array of books to return
-	var firestoreBooks []models.Book
-
-	// iterator over books collection in firestore
-	iter := db.Client.Collection("books").Documents(ctx)
-	defer iter.Stop() // add to clean up resources
-
-	// loop until all documents are added to books array
-	for {
-		var fsBookBuffer models.Book
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Fatalf("Failed to iterate:\n%v", err)
-		}
-		log.Println(doc.Data())
-		if err := doc.DataTo(&fsBookBuffer); err != nil {
-			log.Fatalf("can't cast docsnap to Book:\n%v", err)
-		}
-
-		// append record to array
-		firestoreBooks = append(firestoreBooks, fsBookBuffer)
+	// parse out author name in query params
+	table, err := utils.GetParams(c, "table")
+	fmt.Printf("table: %s\n", table)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": firestoreBooks})
+	data, err := h.db.All(ctx, table)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
 // POST /books
@@ -197,10 +181,10 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 	}
 	defer h.db.Close()
 
-	err = h.db.Drop(ctx, "books", "Title", title)
+	booksDeleted, err := h.db.Drop(ctx, "books", "Title", title)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": true})
+	c.JSON(http.StatusOK, gin.H{"data": booksDeleted})
 }

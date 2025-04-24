@@ -1,12 +1,14 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 
+	"github.com/garbhank/gin-books-api/models"
 	_ "github.com/lib/pq"
 )
 
@@ -43,7 +45,7 @@ func NewPostgres() *Postgres {
 	}
 }
 
-func (p Postgres) Conn() error {
+func (p Postgres) Conn(ctx context.Context) error {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
@@ -58,4 +60,28 @@ func (p Postgres) Conn() error {
 	p.Client = db
 
 	return nil
+}
+
+func (p Postgres) Close() error {
+	err := p.Client.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing database connection: %v\n", err)
+	}
+	return nil
+}
+
+func (p Postgres) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
+	return []models.Book{}, nil
+}
+
+func (p Postgres) Drop(ctx context.Context, table, key, val string) (int, error) {
+	return 0, nil
+}
+
+func (p Postgres) All(ctx context.Context, table string) ([]models.Book, error) {
+	return []models.Book{}, nil
+}
+
+func (p Postgres) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
+	return models.Book{}, nil
 }

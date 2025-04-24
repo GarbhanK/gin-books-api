@@ -21,23 +21,33 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to set up logging, %v\n", err)
 	}
-
 }
 
-func setupRouter(handler controllers.Handler) *gin.Engine {
+func setupRouter(handler controllers.Handler, enableCacheing bool) *gin.Engine {
 	r := gin.Default()
 
 	// cache endpoints which calls the Firestore db
 	store := persistence.NewInMemoryStore(time.Second)
 	ttl := time.Minute * 1 // todo: os.GetEnv
 
+	// logic to toggle caching on specific pages
+	handleGetAllBooks := handler.GetAllBooks
+	handleFindAuthor := handler.FindAuthor
+	handleFindBook := handler.FindBook
+
+	if enableCacheing {
+		handleGetAllBooks = cache.CachePage(store, ttl, handler.GetAllBooks)
+		handleFindAuthor = cache.CachePage(store, ttl, handler.FindAuthor)
+		handleFindBook = cache.CachePage(store, ttl, handler.FindBook)
+	}
+
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/", handler.Root)
 		v1.GET("/ping", handler.Ping)
-		v1.GET("/books", cache.CachePage(store, ttl, handler.FindBooks))
-		v1.GET("/books/author/", cache.CachePage(store, ttl, handler.FindAuthor))
-		v1.GET("/books/title/", cache.CachePage(store, ttl, handler.FindBook))
+		v1.GET("/books/", handleGetAllBooks)
+		v1.GET("/books/author/", handleFindAuthor)
+		v1.GET("/books/title/", handleFindBook)
 		v1.POST("/books", handler.CreateBook)
 		v1.DELETE("/books/", handler.DeleteBook)
 	}
@@ -54,15 +64,15 @@ func main() {
 	case "firestore":
 		db = database.NewFirestore()
 	case "memory":
-		db = database.NewMemoryDB()
-	// case "postgres":
-	// 	db = database.NewPostgres()
+		db = database.NewMemoryDB(nil)
+	case "postgres":
+		db = database.NewPostgres()
 	default:
 		log.Fatalf("Unknown DB type: %s", *dbType)
 	}
 
 	handler := controllers.NewHandler(db)
-	r := setupRouter(*handler)
+	r := setupRouter(*handler, true)
 
 	err := r.Run(":8080")
 	if err != nil {
