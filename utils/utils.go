@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -64,4 +65,17 @@ func GetField(obj any, fieldName string) (any, error) {
 	}
 
 	return fieldVal.Interface(), nil
+}
+
+func GetenvDefault(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func IsSafeIdentifier(id string) bool {
+	// allows only letters, numbers, and underscores
+	re := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+	return re.MatchString(id)
 }

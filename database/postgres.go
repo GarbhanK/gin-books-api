@@ -5,19 +5,19 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 
 	"github.com/garbhank/gin-books-api/models"
+	"github.com/garbhank/gin-books-api/utils"
 	_ "github.com/lib/pq"
 )
 
 const (
-	host     = "localhost"
-	port     = 5432
+	host     = "192.168.178.77"
+	port     = "5432"
 	user     = "postgres"
-	password = "your-password"
-	dbname   = "db-demo"
+	password = "mysecretpassword"
+	dbname   = "postgres"
 )
 
 type Postgres struct {
@@ -31,30 +31,32 @@ type Postgres struct {
 
 func NewPostgres() *Postgres {
 	// get port separately because it's an integer
-	port, err := strconv.Atoi(os.Getenv("PGSQL_PORT"))
+	port, err := strconv.Atoi(utils.GetenvDefault("PGSQL_PORT", port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return &Postgres{
-		host:     os.Getenv("PGSQL_HOST"),
 		port:     port,
-		user:     os.Getenv("PGSQL_USER"),
-		password: os.Getenv("PGSQL_PASSWORD"),
-		dbname:   os.Getenv("PGSQL_DBNAME"),
+		host:     utils.GetenvDefault("PGSQL_HOST", host),
+		user:     utils.GetenvDefault("PGSQL_USER", user),
+		password: utils.GetenvDefault("PGSQL_PASSWORD", password),
+		dbname:   utils.GetenvDefault("PGSQL_DBNAME", dbname),
 	}
 }
 
-func (p Postgres) Conn(ctx context.Context) error {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+func (p *Postgres) Conn(ctx context.Context) error {
+	psqlInfo := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname,
+	)
+	log.Printf("psqlInfo: %v\n", psqlInfo)
+
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Printf("Error connecting to Postgres: %v", err)
 		return err
 	}
-	defer db.Close()
 
 	fmt.Println("Successfully connected!")
 	p.Client = db
@@ -62,7 +64,7 @@ func (p Postgres) Conn(ctx context.Context) error {
 	return nil
 }
 
-func (p Postgres) Close() error {
+func (p *Postgres) Close() error {
 	err := p.Client.Close()
 	if err != nil {
 		return fmt.Errorf("Error closing database connection: %v\n", err)
@@ -70,18 +72,67 @@ func (p Postgres) Close() error {
 	return nil
 }
 
-func (p Postgres) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
-	return []models.Book{}, nil
+func (p *Postgres) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
+	rows, err := p.Client.Query("SELECT * FROM $1 WHERE $2 = $3", table, key, val)
+	if err != nil {
+		return nil, fmt.Errorf("Error while performing query: %v\n", err)
+	}
+	defer rows.Close()
+
+	var books []models.Book
+
+	log.Printf("Iterating through rows...")
+	for rows.Next() {
+		var b models.Book
+		if err := rows.Scan(&b.Title, &b.Author); err != nil {
+			return books, err
+		}
+		books = append(books, b)
+	}
+	if err = rows.Err(); err != nil {
+		return books, err
+	}
+
+	return books, nil
 }
 
-func (p Postgres) Drop(ctx context.Context, table, key, val string) (int, error) {
+func (p *Postgres) Drop(ctx context.Context, table, key, val string) (int, error) {
 	return 0, nil
 }
 
-func (p Postgres) All(ctx context.Context, table string) ([]models.Book, error) {
+func (p *Postgres) All(ctx context.Context, table string) ([]models.Book, error) {
 	return []models.Book{}, nil
 }
 
-func (p Postgres) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
-	return models.Book{}, nil
+func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
+	book := models.Book(data)
+
+	if p.Client == nil {
+		return book, fmt.Errorf("Database client is not initialised")
+	}
+
+	if !utils.IsSafeIdentifier(table) {
+		return book, fmt.Errorf("Invalid table name: %v\n", table)
+	}
+
+	// create the table if not present
+	createTableQuery := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS "%s" (
+		title  VARCHAR(255),
+		author VARCHAR(255)
+	);`, table)
+
+	_, err := p.Client.ExecContext(ctx, createTableQuery)
+	if err != nil {
+		return book, fmt.Errorf("Error creating table: %v\n", err)
+	}
+
+	// insert into db
+	insertQuery := fmt.Sprintf(`INSERT INTO "%s" (title, author) VALUES ($1, $2)`, table)
+
+	_, err = p.Client.ExecContext(ctx, insertQuery, data.Title, data.Author)
+	if err != nil {
+		return book, fmt.Errorf("Error while performing query: %v\n", err)
+	}
+
+	return book, nil
 }

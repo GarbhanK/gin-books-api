@@ -34,15 +34,10 @@ func (h *Handler) Ping(c *gin.Context) {
 	currentTime := time.Now()
 	connectToDatabase := "unable to connect!"
 
-	// create client
-	err := h.db.Conn(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.db.Close()
-
 	// TODO: properly check connection
-	connectToDatabase = "ok"
+	if h.db != nil {
+		connectToDatabase = "ok"
+	}
 
 	// put stuff here to ping the db
 	var status = models.Status{
@@ -58,12 +53,6 @@ func (h *Handler) Ping(c *gin.Context) {
 // Get all books
 func (h *Handler) GetAllBooks(c *gin.Context) {
 	ctx := context.Background()
-	// create client
-	err := h.db.Conn(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.db.Close()
 
 	// parse out author name in query params
 	table, err := utils.GetParams(c, "table")
@@ -85,13 +74,6 @@ func (h *Handler) GetAllBooks(c *gin.Context) {
 // Create new book
 func (h *Handler) CreateBook(c *gin.Context) {
 	ctx := context.Background()
-
-	// create client
-	err := h.db.Conn(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.db.Close()
 
 	// Validate input
 	var newBook models.InsertBookInput
@@ -121,13 +103,6 @@ func (h *Handler) FindBook(c *gin.Context) {
 		return
 	}
 
-	// create client
-	err = h.db.Conn(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.db.Close()
-
 	// array of books to return
 	bookDocs, err := h.db.Get(ctx, "books", "Title", bookTitle)
 	if err != nil {
@@ -146,13 +121,6 @@ func (h *Handler) FindAuthor(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'name' parameter provided"})
 		return
 	}
-
-	// create client
-	err = h.db.Conn(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.db.Close()
 
 	// array of books to return
 	authorBooks, err := h.db.Get(ctx, "books", "Author", author)
@@ -173,13 +141,6 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
 	}
-
-	// create client
-	err = h.db.Conn(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.db.Close()
 
 	booksDeleted, err := h.db.Drop(ctx, "books", "Title", title)
 	if err != nil {

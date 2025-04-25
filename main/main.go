@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"time"
 
@@ -71,10 +72,15 @@ func main() {
 		log.Fatalf("Unknown DB type: %s", *dbType)
 	}
 
+	err := db.Conn(context.Background())
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+
 	handler := controllers.NewHandler(db)
 	r := setupRouter(*handler, true)
 
-	err := r.Run(":8080")
+	err = r.Run(":8080")
 	if err != nil {
 		return
 	}
