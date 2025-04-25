@@ -10,7 +10,10 @@
 
 ## TODOs
 - get Postgres interface working
+- add an insert_timestamp to the schema
+- get memoryDB working with lowercase table names
 - see if I can/need to write tests for the Firestore/Postgres interfaces
+    - mock the sdk interfaces?
 - Have it so multiple db endpoints can be selected
     - have the same data be inserted to Postgres & MemoryDB at the same time
     - use channels with separate queues to split messages between them

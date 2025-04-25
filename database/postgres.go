@@ -73,17 +73,22 @@ func (p *Postgres) Close() error {
 }
 
 func (p *Postgres) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
-	rows, err := p.Client.Query("SELECT * FROM $1 WHERE $2 = $3", table, key, val)
+
+	// filter based on the selected column and value
+	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" WHERE "%s" = $1`, table, key)
+	rows, err := p.Client.QueryContext(ctx, selectQuery, val)
 	if err != nil {
 		return nil, fmt.Errorf("Error while performing query: %v\n", err)
 	}
 	defer rows.Close()
 
-	var books []models.Book
+	// create a slice with 0 elements
+	books := []models.Book{}
 
 	log.Printf("Iterating through rows...")
 	for rows.Next() {
 		var b models.Book
+
 		if err := rows.Scan(&b.Title, &b.Author); err != nil {
 			return books, err
 		}
@@ -101,7 +106,32 @@ func (p *Postgres) Drop(ctx context.Context, table, key, val string) (int, error
 }
 
 func (p *Postgres) All(ctx context.Context, table string) ([]models.Book, error) {
-	return []models.Book{}, nil
+
+	// filter based on the selected column and value
+	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" LIMIT 100`, table)
+	rows, err := p.Client.QueryContext(ctx, selectQuery)
+	if err != nil {
+		return nil, fmt.Errorf("Error while performing query: %v\n", err)
+	}
+	defer rows.Close()
+
+	// create a slice with 0 elements
+	books := []models.Book{}
+
+	log.Printf("Iterating through rows...")
+	for rows.Next() {
+		var b models.Book
+
+		if err := rows.Scan(&b.Title, &b.Author); err != nil {
+			return books, err
+		}
+		books = append(books, b)
+	}
+	if err = rows.Err(); err != nil {
+		return books, err
+	}
+
+	return books, nil
 }
 
 func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
@@ -135,4 +165,13 @@ func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertB
 	}
 
 	return book, nil
+}
+
+func (p *Postgres) TestConnection(ctx context.Context) bool {
+	if err := p.Client.PingContext(ctx); err != nil {
+		log.Printf("DB ping failed: %v\n", err)
+		return false
+	}
+
+	return true
 }

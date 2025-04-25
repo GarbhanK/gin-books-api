@@ -24,19 +24,27 @@ func init() {
 	}
 }
 
-func setupRouter(handler controllers.Handler, enableCacheing bool) *gin.Engine {
+func setupRouter(handler controllers.Handler, noCache bool) *gin.Engine {
 	r := gin.Default()
 
 	// cache endpoints which calls the Firestore db
 	store := persistence.NewInMemoryStore(time.Second)
 	ttl := time.Minute * 1 // todo: os.GetEnv
 
-	// logic to toggle caching on specific pages
-	handleGetAllBooks := handler.GetAllBooks
-	handleFindAuthor := handler.FindAuthor
-	handleFindBook := handler.FindBook
+	var (
+		handleGetAllBooks,
+		handleFindAuthor,
+		handleFindBook func(c *gin.Context)
+	)
 
-	if enableCacheing {
+	// logic to toggle caching on specific pages
+	if noCache {
+		log.Info("Setting up router with caching disabled...")
+		handleGetAllBooks = handler.GetAllBooks
+		handleFindAuthor = handler.FindAuthor
+		handleFindBook = handler.FindBook
+	} else {
+		log.Info("Setting up router with caching enabled...")
 		handleGetAllBooks = cache.CachePage(store, ttl, handler.GetAllBooks)
 		handleFindAuthor = cache.CachePage(store, ttl, handler.FindAuthor)
 		handleFindBook = cache.CachePage(store, ttl, handler.FindBook)
@@ -59,6 +67,7 @@ func setupRouter(handler controllers.Handler, enableCacheing bool) *gin.Engine {
 func main() {
 	// parse command line flags
 	dbType := flag.String("db", "memory", "Database type: 'memory', 'firestore', or 'postgres'")
+	noCache := flag.Bool("no-cache", false, "Add this flag to disable caching - useful for testing")
 	flag.Parse()
 
 	switch *dbType {
@@ -78,7 +87,7 @@ func main() {
 	}
 
 	handler := controllers.NewHandler(db)
-	r := setupRouter(*handler, true)
+	r := setupRouter(*handler, *noCache)
 
 	err = r.Run(":8080")
 	if err != nil {
