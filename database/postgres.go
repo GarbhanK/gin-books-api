@@ -68,7 +68,7 @@ func (p *Postgres) Conn(ctx context.Context) error {
 func (p *Postgres) Close() error {
 	err := p.Client.Close()
 	if err != nil {
-		return fmt.Errorf("Error closing database connection: %v\n", err)
+		return fmt.Errorf("error closing database connection: %v", err)
 	}
 	return nil
 }
@@ -79,9 +79,13 @@ func (p *Postgres) Get(ctx context.Context, table, key, val string) ([]models.Bo
 	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" WHERE "%s" = $1`, table, strings.ToLower(key))
 	rows, err := p.Client.QueryContext(ctx, selectQuery, val)
 	if err != nil {
-		return nil, fmt.Errorf("Error while performing query: %v\n", err)
+		return nil, fmt.Errorf("error while performing query: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("error closing rows: %v\n", err)
+		}
+	}()
 
 	// create a slice with 0 elements
 	books := []models.Book{}
@@ -109,13 +113,13 @@ func (p *Postgres) Drop(ctx context.Context, table, key, val string) (int, error
 	deleteQuery := fmt.Sprintf(`DELETE FROM "%s" WHERE "%s" = $1`, table, strings.ToLower(key))
 	res, err := p.Client.ExecContext(ctx, deleteQuery, val)
 	if err != nil {
-		return 0, fmt.Errorf("Error while performing query: %v\n", err)
+		return 0, fmt.Errorf("error while performing query: %v", err)
 	}
 
 	// get the number of rows deleted by the query
 	n, err := res.RowsAffected()
 	if err != nil {
-		return int(n), fmt.Errorf("Error while getting the number of rows affected by the DELETE command %v\n", err)
+		return int(n), fmt.Errorf("error while getting the number of rows affected by the DELETE command: %v", err)
 	}
 
 	return int(n), nil
@@ -127,9 +131,13 @@ func (p *Postgres) All(ctx context.Context, table string) ([]models.Book, error)
 	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" LIMIT 100`, table)
 	rows, err := p.Client.QueryContext(ctx, selectQuery)
 	if err != nil {
-		return nil, fmt.Errorf("Error while performing query: %v\n", err)
+		return nil, fmt.Errorf("error while performing query: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("error closing rows: %v\n", err)
+		}
+	}()
 
 	// create a slice with 0 elements
 	books := []models.Book{}
@@ -158,7 +166,7 @@ func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertB
 	}
 
 	if !utils.IsSafeIdentifier(table) {
-		return book, fmt.Errorf("Invalid table name: %v\n", table)
+		return book, fmt.Errorf("invalid table name: %v", table)
 	}
 
 	// create the table if not present
@@ -169,7 +177,7 @@ func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertB
 
 	_, err := p.Client.ExecContext(ctx, createTableQuery)
 	if err != nil {
-		return book, fmt.Errorf("Error creating table: %v\n", err)
+		return book, fmt.Errorf("error creating table: %v", err)
 	}
 
 	// insert into db
@@ -177,7 +185,7 @@ func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertB
 
 	_, err = p.Client.ExecContext(ctx, insertQuery, data.Title, data.Author)
 	if err != nil {
-		return book, fmt.Errorf("Error while performing query: %v\n", err)
+		return book, fmt.Errorf("error while performing query: %v", err)
 	}
 
 	return book, nil

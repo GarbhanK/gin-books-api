@@ -54,7 +54,7 @@ func SetupLogging(logFilename string) error {
 func GetField(obj any, fieldName string) (any, error) {
 	// use reflection to grab struct field value by name
 	v := reflect.ValueOf(obj)
-	log.Printf("GetField val: %v\n", v)
+	log.Debugf("GetField val: %v\n", v)
 
 	// get the value from the reflected value points to
 	v = reflect.Indirect(v)

@@ -35,7 +35,7 @@ func NewMemoryDB(data map[string][]models.Book) *MemoryDB {
 
 func (m *MemoryDB) Conn(ctx context.Context) error {
 	if m.Client == nil {
-		return errors.New("No in-memory database found!")
+		return errors.New("no in-memory database found")
 	}
 	fmt.Printf("Connected to MemoryDB! :: %v\n", m.Client)
 	return nil
@@ -69,7 +69,7 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 
 	books, ok := m.Client[table]
 	if !ok {
-		return []models.Book{}, fmt.Errorf("Data not found for: %v", key)
+		return []models.Book{}, fmt.Errorf("data not found for: %v", key)
 	}
 
 	matchingBooks := []models.Book{}
@@ -79,7 +79,7 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 		// use reflect to get struct field by string
 		fieldValue, err := utils.GetField(book, key)
 		if err != nil {
-			return nil, fmt.Errorf("Error: %v", err)
+			return nil, fmt.Errorf("error getting field value: %v", err)
 		}
 
 		if fieldValue == val {
@@ -93,8 +93,9 @@ func (m *MemoryDB) Get(ctx context.Context, table, key, val string) ([]models.Bo
 func (m *MemoryDB) Drop(ctx context.Context, table, key, val string) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	var booksFound int = 0
+
 	var filteredBooks []models.Book
+	booksFound := 0
 
 	log.Printf("pre drop map: %v\n", m.Client[table])
 
@@ -102,7 +103,7 @@ func (m *MemoryDB) Drop(ctx context.Context, table, key, val string) (int, error
 		// get book field value
 		fieldValue, err := utils.GetField(book, key)
 		if err != nil {
-			return booksFound, fmt.Errorf("Error: %v", err)
+			return booksFound, fmt.Errorf("error: %v", err)
 		}
 
 		// if value matches, don't append to the output array
@@ -131,8 +132,5 @@ func (m *MemoryDB) All(ctx context.Context, table string) ([]models.Book, error)
 }
 
 func (m *MemoryDB) IsConnected(ctx context.Context) bool {
-	if m.Client == nil {
-		return false
-	}
-	return true
+	return m.Client != nil
 }

@@ -49,7 +49,7 @@ func (f *Firestore) Conn(ctx context.Context) error {
 func (f *Firestore) Close() error {
 	err := f.Client.Close()
 	if err != nil {
-		return errors.New("Unable to close database connection with Firestore")
+		return errors.New("unable to close database connection with Firestore")
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (f *Firestore) Get(ctx context.Context, table, key, val string) ([]models.B
 
 		log.Println(doc.Data())
 		if err := doc.DataTo(&booksBuffer); err != nil {
-			log.Printf("can't cast docsnap to Book:\n%v", err)
+			log.Printf("can't cast docsnap to Book: %v", err)
 			return nil, err
 		}
 
@@ -106,6 +106,9 @@ func (f *Firestore) Drop(ctx context.Context, table, key, val string) (int, erro
 		iter := f.Client.Collection(table).Where(key, "==", val).Documents(ctx)
 		numDeleted := 0
 
+		// lowercase titles for matching book titles
+		valueLower := strings.ToLower(val)
+
 		for {
 			var bookBuffer models.Book
 
@@ -122,15 +125,17 @@ func (f *Firestore) Drop(ctx context.Context, table, key, val string) (int, erro
 			log.Println(doc.Data())
 
 			if err := doc.DataTo(&bookBuffer); err != nil {
-				return numDeleted, fmt.Errorf("Can't cast docsnap to Book: %v\n", err)
+				return numDeleted, fmt.Errorf("can't cast docsnap to Book: %v", err)
 			}
 
-			// lowercase titles for matching book titles
-			valueLower := strings.ToLower(val)
 			// TODO: use utils.GetField() for grabbing struct field by string
 			parsedFirebaseTitle := strings.ToLower(bookBuffer.Title)
 			if parsedFirebaseTitle == valueLower {
-				bulkwriter.Delete(doc.Ref)
+				_, err := bulkwriter.Delete(doc.Ref)
+				if err != nil {
+					return numDeleted, fmt.Errorf("error while performing delete from firestore bulkwriter: %v", err)
+				}
+
 				log.Printf("Deleted record: %s", val)
 				numDeleted++
 			}
