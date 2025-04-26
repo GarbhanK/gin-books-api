@@ -29,7 +29,7 @@ func NewFirestore() *Firestore {
 	}
 }
 
-func (f Firestore) Conn(ctx context.Context) error {
+func (f *Firestore) Conn(ctx context.Context) error {
 	// sets gcp project id
 	if f.projectId == "" {
 		log.Fatalf("Warning: GCP_PROJECT_ID env variable is not set. Firestore client will not be initialized")
@@ -46,7 +46,7 @@ func (f Firestore) Conn(ctx context.Context) error {
 	return nil
 }
 
-func (f Firestore) Close() error {
+func (f *Firestore) Close() error {
 	err := f.Client.Close()
 	if err != nil {
 		return errors.New("Unable to close database connection with Firestore")
@@ -55,7 +55,7 @@ func (f Firestore) Close() error {
 	return nil
 }
 
-func (f Firestore) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
+func (f *Firestore) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
 	// create Books slice
 	var bookDocs []models.Book
 
@@ -88,7 +88,7 @@ func (f Firestore) Get(ctx context.Context, table, key, val string) ([]models.Bo
 	return bookDocs, nil
 }
 
-func (f Firestore) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
+func (f *Firestore) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
 	// create a DocumentReference
 	_, _, err := f.Client.Collection(table).Add(ctx, data)
 	if err != nil {
@@ -99,7 +99,7 @@ func (f Firestore) Insert(ctx context.Context, table string, data models.InsertB
 	return models.Book(data), nil
 }
 
-func (f Firestore) Drop(ctx context.Context, table, key, val string) (int, error) {
+func (f *Firestore) Drop(ctx context.Context, table, key, val string) (int, error) {
 	bulkwriter := f.Client.BulkWriter(ctx)
 
 	for {
@@ -138,6 +138,10 @@ func (f Firestore) Drop(ctx context.Context, table, key, val string) (int, error
 	}
 }
 
-func (f Firestore) All(ctx context.Context, table string) ([]models.Book, error) {
+func (f *Firestore) All(ctx context.Context, table string) ([]models.Book, error) {
 	return []models.Book{}, nil
+}
+
+func (f *Firestore) IsConnected(ctx context.Context) bool {
+	return true
 }

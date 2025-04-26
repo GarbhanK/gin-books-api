@@ -35,7 +35,7 @@ func (h *Handler) Ping(c *gin.Context) {
 	connectToDatabase := "unable to connect!"
 
 	// TODO: properly check connection
-	if h.db != nil {
+	if h.db.IsConnected(context.Background()) {
 		connectToDatabase = "ok"
 	}
 
@@ -142,7 +142,7 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 		return
 	}
 
-	booksDeleted, err := h.db.Drop(ctx, "books", "Title", title)
+	booksDeleted, err := h.db.Drop(ctx, "books", "title", title)
 	if err != nil {
 		log.Fatal(err)
 	}

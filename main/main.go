@@ -66,14 +66,14 @@ func setupRouter(handler controllers.Handler, noCache bool) *gin.Engine {
 
 func main() {
 	// parse command line flags
-	dbType := flag.String("db", "memory", "Database type: 'memory', 'firestore', or 'postgres'")
+	dbType := flag.String("db", "memorydb", "Database type: 'memory', 'firestore', or 'postgres'")
 	noCache := flag.Bool("no-cache", false, "Add this flag to disable caching - useful for testing")
 	flag.Parse()
 
 	switch *dbType {
 	case "firestore":
 		db = database.NewFirestore()
-	case "memory":
+	case "memorydb":
 		db = database.NewMemoryDB(nil)
 	case "postgres":
 		db = database.NewPostgres()

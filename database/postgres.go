@@ -102,7 +102,22 @@ func (p *Postgres) Get(ctx context.Context, table, key, val string) ([]models.Bo
 }
 
 func (p *Postgres) Drop(ctx context.Context, table, key, val string) (int, error) {
-	return 0, nil
+	// TODO: make sure casting int64 to int isn't causing any trouble
+
+	// delete data from the table based on the input table/key/value
+	deleteQuery := fmt.Sprintf(`DELETE FROM "%s" WHERE "%s" = $1`, table, key)
+	res, err := p.Client.ExecContext(ctx, deleteQuery, val)
+	if err != nil {
+		return 0, fmt.Errorf("Error while performing query: %v\n", err)
+	}
+
+	// get the number of rows deleted by the query
+	n, err := res.RowsAffected()
+	if err != nil {
+		return int(n), fmt.Errorf("Error while getting the number of rows affected by the DELETE command %v\n", err)
+	}
+
+	return int(n), nil
 }
 
 func (p *Postgres) All(ctx context.Context, table string) ([]models.Book, error) {
@@ -167,7 +182,7 @@ func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertB
 	return book, nil
 }
 
-func (p *Postgres) TestConnection(ctx context.Context) bool {
+func (p *Postgres) IsConnected(ctx context.Context) bool {
 	if err := p.Client.PingContext(ctx); err != nil {
 		log.Printf("DB ping failed: %v\n", err)
 		return false

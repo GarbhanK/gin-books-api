@@ -129,3 +129,10 @@ func (m *MemoryDB) All(ctx context.Context, table string) ([]models.Book, error)
 
 	return allRecords, nil
 }
+
+func (m *MemoryDB) IsConnected(ctx context.Context) bool {
+	if m.Client == nil {
+		return false
+	}
+	return true
+}
