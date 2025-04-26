@@ -104,7 +104,7 @@ func (h *Handler) FindBook(c *gin.Context) {
 	}
 
 	// array of books to return
-	bookDocs, err := h.db.Get(ctx, "books", "title", bookTitle)
+	bookDocs, err := h.db.Get(ctx, "books", "Title", bookTitle)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func (h *Handler) FindAuthor(c *gin.Context) {
 	}
 
 	// array of books to return
-	authorBooks, err := h.db.Get(ctx, "books", "author", author)
+	authorBooks, err := h.db.Get(ctx, "books", "Author", author)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 		return
 	}
 
-	booksDeleted, err := h.db.Drop(ctx, "books", "title", title)
+	booksDeleted, err := h.db.Drop(ctx, "books", "Title", title)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/garbhank/gin-books-api/models"
 	"github.com/garbhank/gin-books-api/utils"
@@ -75,7 +76,7 @@ func (p *Postgres) Close() error {
 func (p *Postgres) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
 
 	// filter based on the selected column and value
-	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" WHERE "%s" = $1`, table, key)
+	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" WHERE "%s" = $1`, table, strings.ToLower(key))
 	rows, err := p.Client.QueryContext(ctx, selectQuery, val)
 	if err != nil {
 		return nil, fmt.Errorf("Error while performing query: %v\n", err)
@@ -105,7 +106,7 @@ func (p *Postgres) Drop(ctx context.Context, table, key, val string) (int, error
 	// TODO: make sure casting int64 to int isn't causing any trouble
 
 	// delete data from the table based on the input table/key/value
-	deleteQuery := fmt.Sprintf(`DELETE FROM "%s" WHERE "%s" = $1`, table, key)
+	deleteQuery := fmt.Sprintf(`DELETE FROM "%s" WHERE "%s" = $1`, table, strings.ToLower(key))
 	res, err := p.Client.ExecContext(ctx, deleteQuery, val)
 	if err != nil {
 		return 0, fmt.Errorf("Error while performing query: %v\n", err)
