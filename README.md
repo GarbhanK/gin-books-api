@@ -9,11 +9,12 @@
 - [Started from this article](https://blog.logrocket.com/rest-api-golang-gin-gorm/)
 
 ## TODOs
-- get Postgres interface working
-- add an insert_timestamp to the schema
-- get memoryDB working with lowercase table names
-- see if I can/need to write tests for the Firestore/Postgres interfaces
+- [x] get Postgres interface working
+- [ ] add an `insert_timestamp` column to the schema
+- [x] get memoryDB working with lowercase table names
+- [ ] see if I can/need to write tests for the Firestore/Postgres interfaces
     - mock the sdk interfaces?
-- Have it so multiple db endpoints can be selected
+- [ ] see if I should move database tests into the database module
+- [ ] Have it so multiple db endpoints can be selected
     - have the same data be inserted to Postgres & MemoryDB at the same time
     - use channels with separate queues to split messages between them
