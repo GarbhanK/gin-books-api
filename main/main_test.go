@@ -58,6 +58,7 @@ func TestGetPingRoute(t *testing.T) {
 		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
 		APIStatus: "ok",
 		DBStatus:  "ok",
+		DBType: "memorydb",
 	}
 
 	mockResponse := &pingStatusTest{Data: pingResponse}
