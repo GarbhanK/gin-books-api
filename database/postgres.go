@@ -199,3 +199,7 @@ func (p *Postgres) IsConnected(ctx context.Context) bool {
 
 	return true
 }
+
+func (p *Postgres) Type() string {
+	return "postgres"
+}

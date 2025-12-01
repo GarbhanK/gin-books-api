@@ -83,7 +83,7 @@ func main() {
 
 	err := db.Conn(context.Background())
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		log.Errorf("Unable to connect to database: %v\n", err)
 	}
 
 	handler := controllers.NewHandler(db)

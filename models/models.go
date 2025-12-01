@@ -9,6 +9,7 @@ type Status struct {
 	Timestamp string `json:"timestamp"`
 	APIStatus string `json:"api_status"`
 	DBStatus  string `json:"database_status"`
+	DBType    string `json:"database_type"`
 }
 
 type InsertBookInput struct {

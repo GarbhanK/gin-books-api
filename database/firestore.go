@@ -14,7 +14,7 @@ import (
 )
 
 type Firestore struct {
-	Client    firestore.Client
+	Client    *firestore.Client
 	projectId string
 }
 
@@ -42,7 +42,7 @@ func (f *Firestore) Conn(ctx context.Context) error {
 	}
 
 	// add client to db struct
-	f.Client = *fs_client
+	f.Client = fs_client
 	return nil
 }
 
@@ -148,5 +148,12 @@ func (f *Firestore) All(ctx context.Context, table string) ([]models.Book, error
 }
 
 func (f *Firestore) IsConnected(ctx context.Context) bool {
+	if f.Client == nil {
+		return false
+	}
 	return true
+}
+
+func (f *Firestore) Type() string {
+	return "firestore"
 }

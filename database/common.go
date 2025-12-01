@@ -15,5 +15,6 @@ type Database interface {
 	Drop(ctx context.Context, table, key, val string) (int, error)
 	Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error)
 	IsConnected(ctx context.Context) bool // (test db connection, currently ping just checks for nil)
+	Type() string
 	// Setup() (could be used to create table if not exists, etc)
 }

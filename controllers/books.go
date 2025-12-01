@@ -44,6 +44,7 @@ func (h *Handler) Ping(c *gin.Context) {
 		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
 		APIStatus: "ok",
 		DBStatus:  connectToDatabase,
+		DBType:    h.db.Type(),
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": status})
