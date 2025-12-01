@@ -7,8 +7,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/garbhank/gin-books-api/models"
-	"github.com/garbhank/gin-books-api/utils"
+	"github.com/garbhank/gin-books-api/src/models"
+	"github.com/garbhank/gin-books-api/src/utils"
 )
 
 // fake in memory db for demo/testing
@@ -136,4 +136,3 @@ func (m *MemoryDB) IsConnected(ctx context.Context) bool {
 }
 
 func (f *MemoryDB) Type() string { return "memorydb" }
-

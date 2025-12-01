@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
-	"github.com/garbhank/gin-books-api/models"
+	"github.com/garbhank/gin-books-api/src/models"
 	"google.golang.org/api/iterator"
 )
 
@@ -152,4 +152,3 @@ func (f *Firestore) IsConnected(ctx context.Context) bool {
 }
 
 func (f *Firestore) Type() string { return "firestore" }
-

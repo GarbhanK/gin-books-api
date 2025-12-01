@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/garbhank/gin-books-api/models"
-	"github.com/garbhank/gin-books-api/utils"
+	"github.com/garbhank/gin-books-api/src/models"
+	"github.com/garbhank/gin-books-api/src/utils"
 	_ "github.com/lib/pq"
 )
 
 const (
-	host     = "postgres"	// hostname set for docker-compose internal dns
+	host     = "postgres" // hostname set for docker-compose internal dns
 	port     = "5432"
 	user     = "gin"
 	password = "ginpass"
@@ -201,4 +201,3 @@ func (p *Postgres) IsConnected(ctx context.Context) bool {
 }
 
 func (p *Postgres) Type() string { return "postgres" }
-
