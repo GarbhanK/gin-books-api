@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -65,7 +64,8 @@ func (h *Handler) GetAllBooks(c *gin.Context) {
 
 	data, err := h.db.All(ctx, table)
 	if err != nil {
-		log.Fatal(err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": data})
@@ -85,7 +85,8 @@ func (h *Handler) CreateBook(c *gin.Context) {
 
 	book, err := h.db.Insert(ctx, "books", newBook)
 	if err != nil {
-		log.Fatal(err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": book})
@@ -107,7 +108,8 @@ func (h *Handler) FindBook(c *gin.Context) {
 	// array of books to return
 	bookDocs, err := h.db.Get(ctx, "books", "Title", bookTitle)
 	if err != nil {
-		log.Fatal(err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": bookDocs})
@@ -126,7 +128,8 @@ func (h *Handler) FindAuthor(c *gin.Context) {
 	// array of books to return
 	authorBooks, err := h.db.Get(ctx, "books", "Author", author)
 	if err != nil {
-		log.Fatal(err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": authorBooks})
@@ -145,7 +148,8 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 
 	booksDeleted, err := h.db.Drop(ctx, "books", "Title", title)
 	if err != nil {
-		log.Fatal(err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": booksDeleted})
