@@ -1,19 +1,19 @@
 
 build:
-	go build -o bin/main src/main/main.go
+	go build -o bin/main main/main.go
 
 run:
-	go run src/main/main.go
+	go run main/main.go
 
 test:
 	go test ./...
 
 memorydb:
-	go run src/main/main.go -db memorydb
+	go run main/main.go -db memorydb
 
 postgres:
-	go run src/main/main.go -db postgres
+	go run main/main.go -db postgres
 
 firestore:
-	go run src/main/main.go -db firestore
+	go run main/main.go -db firestore
 

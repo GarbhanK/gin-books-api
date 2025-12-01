@@ -7,8 +7,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/garbhank/gin-books-api/src/models"
-	"github.com/garbhank/gin-books-api/src/utils"
+	"github.com/garbhank/gin-books-api/models"
+	"github.com/garbhank/gin-books-api/utils"
 )
 
 // fake in memory db for demo/testing

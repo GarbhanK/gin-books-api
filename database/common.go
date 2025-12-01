@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	"github.com/garbhank/gin-books-api/src/models"
+	"github.com/garbhank/gin-books-api/models"
 )
 
 // interface for multiple Database backends

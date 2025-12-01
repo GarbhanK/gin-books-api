@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
-	"github.com/garbhank/gin-books-api/src/models"
+	"github.com/garbhank/gin-books-api/models"
 	"google.golang.org/api/iterator"
 )
 
