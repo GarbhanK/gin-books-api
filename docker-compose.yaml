@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  api:
+    image: localhost/gin-books-api-postgres:latest
+    container_name: gin-books-api
+    depends_on:
+      - postgres
+    environment:
+      DB: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: gin
+      POSTGRES_PASSWORD: ginpass
+      POSTGRES_DB: books
+      POSTGRES_PORT: 5432
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: gin-books-postgres
+    environment:
+      POSTGRES_USER: gin
+      POSTGRES_PASSWORD: ginpass
+      POSTGRES_DB: books
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

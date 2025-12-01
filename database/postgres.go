@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	host     = "192.168.178.77"
+	host     = "postgres"	// hostname set for docker-compose internal dns
 	port     = "5432"
-	user     = "postgres"
-	password = "mysecretpassword"
-	dbname   = "postgres"
+	user     = "gin"
+	password = "ginpass"
+	dbname   = "books"
 )
 
 type Postgres struct {
