@@ -135,6 +135,5 @@ func (m *MemoryDB) IsConnected(ctx context.Context) bool {
 	return m.Client != nil
 }
 
-func (f *MemoryDB) Type() string {
-	return "memorydb"
-}
+func (f *MemoryDB) Type() string { return "memorydb" }
+

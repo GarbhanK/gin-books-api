@@ -148,12 +148,8 @@ func (f *Firestore) All(ctx context.Context, table string) ([]models.Book, error
 }
 
 func (f *Firestore) IsConnected(ctx context.Context) bool {
-	if f.Client == nil {
-		return false
-	}
-	return true
+	return f.Client != nil
 }
 
-func (f *Firestore) Type() string {
-	return "firestore"
-}
+func (f *Firestore) Type() string { return "firestore" }
+
