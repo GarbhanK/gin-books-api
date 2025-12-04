@@ -74,7 +74,6 @@ func (p *Postgres) Close() error {
 }
 
 func (p *Postgres) Get(ctx context.Context, table, key, val string) ([]models.Book, error) {
-
 	// filter based on the selected column and value
 	selectQuery := fmt.Sprintf(`SELECT title, author FROM "%s" WHERE "%s" = $1`, table, strings.ToLower(key))
 	rows, err := p.Client.QueryContext(ctx, selectQuery, val)
@@ -159,18 +158,23 @@ func (p *Postgres) All(ctx context.Context, table string) ([]models.Book, error)
 }
 
 func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
-	book := models.Book(data)
+	book := models.Book{
+		Id:     utils.UUID(),
+		Title:  data.Title,
+		Author: data.Author,
+	}
 
 	if p.Client == nil {
-		return book, fmt.Errorf("Database client is not initialised")
+		return models.Book{}, fmt.Errorf("Database client is not initialised")
 	}
 
 	if !utils.IsSafeIdentifier(table) {
-		return book, fmt.Errorf("invalid table name: %v", table)
+		return models.Book{}, fmt.Errorf("invalid table name: %v", table)
 	}
 
 	// create the table if not present
 	createTableQuery := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS "%s" (
+		id	   TEXT PRIMARY KEY,
 		title  VARCHAR(255),
 		author VARCHAR(255)
 	);`, table)
@@ -180,10 +184,10 @@ func (p *Postgres) Insert(ctx context.Context, table string, data models.InsertB
 		return book, fmt.Errorf("error creating table: %v", err)
 	}
 
-	// insert into db
-	insertQuery := fmt.Sprintf(`INSERT INTO "%s" (title, author) VALUES ($1, $2)`, table)
+	// insert new book into db table
+	insertQuery := fmt.Sprintf(`INSERT INTO "%s" (id, title, author) VALUES ($1, $2, $3)`, table)
 
-	_, err = p.Client.ExecContext(ctx, insertQuery, data.Title, data.Author)
+	_, err = p.Client.ExecContext(ctx, insertQuery, book.Id, book.Title, book.Author)
 	if err != nil {
 		return book, fmt.Errorf("error while performing query: %v", err)
 	}

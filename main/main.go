@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"flag"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,8 +16,6 @@ import (
 	"github.com/gin-contrib/cache/persistence"
 )
 
-var db database.Database
-
 func init() {
 	err := utils.SetupLogging("books.log")
 	if err != nil {
@@ -24,12 +23,12 @@ func init() {
 	}
 }
 
-func setupRouter(handler controllers.Handler, noCache bool) *gin.Engine {
+func setupRouter(handler *controllers.Handler, noCache bool) *gin.Engine {
 	r := gin.Default()
 
 	// cache endpoints which calls the Firestore db
 	store := persistence.NewInMemoryStore(time.Second)
-	ttl := time.Minute * 1 // todo: os.GetEnv
+	ttl := time.Minute * time.Duration(utils.GetEnvInt("CACHE_TTL_MIN", 1))
 
 	var (
 		handleGetAllBooks,
@@ -65,12 +64,25 @@ func setupRouter(handler controllers.Handler, noCache bool) *gin.Engine {
 }
 
 func main() {
-	// parse command line flags
-	dbType := flag.String("db", "memorydb", "Database type: 'memory', 'firestore', or 'postgres'")
-	noCache := flag.Bool("no-cache", false, "Add this flag to disable caching - useful for testing")
-	flag.Parse()
+	// parse environment variable opts
+	var dbType string // 'memory', 'firestore', or 'postgres'
+	if v := os.Getenv("DB_TYPE"); v != "" {
+		dbType = v
+	}
 
-	switch *dbType {
+	var noCache bool // 'true' or 'false'
+	if v := os.Getenv("ENABLE_CACHE"); v != "" {
+		if strings.ToLower(v) == "true" {
+			noCache = true
+		} else {
+			noCache = false
+		}
+	}
+	// flag.Parse()
+
+	var db database.Database
+
+	switch dbType {
 	case "firestore":
 		db = database.NewFirestore()
 	case "memorydb":
@@ -78,7 +90,7 @@ func main() {
 	case "postgres":
 		db = database.NewPostgres()
 	default:
-		log.Fatalf("Unknown DB type: %s", *dbType)
+		log.Fatalf("Unknown DB type: %s", dbType)
 	}
 
 	err := db.Conn(context.Background())
@@ -87,7 +99,7 @@ func main() {
 	}
 
 	handler := controllers.NewHandler(db)
-	r := setupRouter(*handler, *noCache)
+	r := setupRouter(handler, noCache)
 
 	err = r.Run(":8080")
 	if err != nil {

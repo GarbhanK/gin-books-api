@@ -7,8 +7,10 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -78,4 +80,22 @@ func IsSafeIdentifier(id string) bool {
 	// allows only letters, numbers, and underscores
 	re := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 	return re.MatchString(id)
+}
+
+func GetEnvInt(name string, default_value int) int {
+	cacheTTL := os.Getenv("CACHE_TTL_MIN")
+	if cacheTTL == "" {
+		return default_value
+	}
+
+	ttlDuration, err := strconv.Atoi(cacheTTL)
+	if err != nil {
+		log.Fatalf("Failed to parse %s environment variable: %v\n", name, err)
+	}
+
+	return ttlDuration
+}
+
+var UUID = func() string {
+	return uuid.New().String()
 }

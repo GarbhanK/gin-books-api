@@ -13,6 +13,7 @@ import (
 	"github.com/garbhank/gin-books-api/controllers"
 	"github.com/garbhank/gin-books-api/database"
 	"github.com/garbhank/gin-books-api/models"
+	"github.com/garbhank/gin-books-api/utils"
 )
 
 type pingStatusTest struct {
@@ -47,7 +48,7 @@ var seedDataMultiple map[string][]models.Book = map[string][]models.Book{
 
 func TestGetPingRoute(t *testing.T) {
 	handler := controllers.NewHandler(database.NewMemoryDB(nil))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 	currentTime := time.Now()
 
 	w := httptest.NewRecorder()
@@ -58,7 +59,7 @@ func TestGetPingRoute(t *testing.T) {
 		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
 		APIStatus: "ok",
 		DBStatus:  "ok",
-		DBType: "memorydb",
+		DBType:    "memorydb",
 	}
 
 	mockResponse := &pingStatusTest{Data: pingResponse}
@@ -70,7 +71,11 @@ func TestGetPingRoute(t *testing.T) {
 
 func TestPostBookRoute(t *testing.T) {
 	handler := controllers.NewHandler(database.NewMemoryDB(nil))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
+
+	utils.UUID = func() string {
+		return "mock-uuid-123"
+	}
 
 	w := httptest.NewRecorder()
 
@@ -85,7 +90,7 @@ func TestPostBookRoute(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// create the expected response
-	mockResponse := &postBookTest{Data: models.Book{Title: "Fictions", Author: "Jorge Luis Borges"}}
+	mockResponse := &postBookTest{Data: models.Book{Title: "Fictions", Author: "Jorge Luis Borges", Id: "mock-uuid-123"}}
 	b, _ := json.Marshal(mockResponse)
 
 	assert.Equal(t, 200, w.Code)
@@ -95,7 +100,7 @@ func TestPostBookRoute(t *testing.T) {
 func TestGetBookTitleSingleRoute(t *testing.T) {
 	// create memoryDB with seed data
 	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/books/title/?title=Fictions", nil)
@@ -116,7 +121,7 @@ func TestGetBookTitleSingleRoute(t *testing.T) {
 func TestGetBookTitleMultipleRoute(t *testing.T) {
 	// create memoryDB with seed data
 	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/books/title/?title=Fictions", nil)
@@ -137,7 +142,7 @@ func TestGetBookTitleMultipleRoute(t *testing.T) {
 
 func TestGetBookAuthorSingleRoute(t *testing.T) {
 	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/books/author/?name=Jorge+Luis+Borges", nil)
@@ -157,7 +162,7 @@ func TestGetBookAuthorSingleRoute(t *testing.T) {
 
 func TestGetBookAuthorMultipleRoute(t *testing.T) {
 	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/books/author/?name=Jorge+Luis+Borges", nil)
@@ -179,7 +184,7 @@ func TestGetBookAuthorMultipleRoute(t *testing.T) {
 // DELETE api/v1/books/?title=Fictions
 func TestDeleteBookPositive(t *testing.T) {
 	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 
 	w1 := httptest.NewRecorder()
 	deleteReq, _ := http.NewRequest(http.MethodDelete, "/api/v1/books/?title=Fictions", nil)
@@ -206,7 +211,7 @@ func TestDeleteBookPositive(t *testing.T) {
 func TestDeleteBookNegative(t *testing.T) {
 	// create memoryDB with seed data
 	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle))
-	router := setupRouter(*handler, false)
+	router := setupRouter(handler, false)
 
 	w1 := httptest.NewRecorder()
 	deleteReq, _ := http.NewRequest(http.MethodDelete, "/api/v1/books/?title=NoSuchBook", nil)

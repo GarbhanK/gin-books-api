@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/garbhank/gin-books-api/models"
+	"github.com/garbhank/gin-books-api/utils"
 	"google.golang.org/api/iterator"
 )
 
@@ -89,14 +90,21 @@ func (f *Firestore) Get(ctx context.Context, table, key, val string) ([]models.B
 }
 
 func (f *Firestore) Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error) {
+	// create book document with added UUID string
+	newBook := models.Book{
+		Id:     utils.UUID(),
+		Title:  data.Title,
+		Author: data.Author,
+	}
+
 	// create a DocumentReference
-	_, _, err := f.Client.Collection(table).Add(ctx, data)
+	_, _, err := f.Client.Collection(table).Add(ctx, newBook)
 	if err != nil {
 		log.Printf("Failed adding document:\n%v", err)
 		return models.Book{}, err
 	}
 
-	return models.Book(data), nil
+	return newBook, nil
 }
 
 func (f *Firestore) Drop(ctx context.Context, table, key, val string) (int, error) {

@@ -52,7 +52,11 @@ func (m *MemoryDB) Insert(ctx context.Context, table string, data models.InsertB
 	log.Printf("insert map before: %v\n", m.Client)
 
 	// create new book struct
-	newBook := models.Book(data)
+	newBook := models.Book{
+		Id:     utils.UUID(),
+		Title:  data.Title,
+		Author: data.Author,
+	}
 
 	// append new book to the 'table' array
 	m.Client[table] = append(m.Client[table], newBook)

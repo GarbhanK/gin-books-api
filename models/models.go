@@ -1,6 +1,7 @@
 package models
 
 type Book struct {
+	Id	   string `json:"id" firestore:"id"`
 	Title  string `json:"title" firestore:"title"`
 	Author string `json:"author" firestore:"author"`
 }
@@ -25,3 +26,4 @@ type UpdateBookInput struct {
 type FindAuthorInput struct {
 	Author string `json:"author"`
 }
+

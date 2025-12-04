@@ -38,7 +38,6 @@ func (h *Handler) Ping(c *gin.Context) {
 		connectToDatabase = "ok"
 	}
 
-	// put stuff here to ping the db
 	var status = models.Status{
 		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
 		APIStatus: "ok",
