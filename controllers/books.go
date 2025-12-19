@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/garbhank/gin-books-api/database"
 	"github.com/garbhank/gin-books-api/models"
@@ -15,11 +15,26 @@ import (
 )
 
 type Handler struct {
-	db database.Database
+	primaryDB   database.Database
+	secondaryDB database.Database
 }
 
-func NewHandler(dbType database.Database) *Handler {
-	return &Handler{db: dbType}
+func NewHandler(primary database.Database, secondary database.Database) *Handler {
+	err := primary.Setup(context.Background())
+	if err != nil {
+		log.Errorf("Failed to setup %s database: %v", primary.Type(), err)
+	}
+	if secondary != nil {
+		err := secondary.Setup(context.Background())
+		if err != nil {
+			log.Errorf("Failed to setup %s database: %v", secondary.Type(), err)
+		}
+	}
+
+	return &Handler{
+		primaryDB:   primary,
+		secondaryDB: secondary,
+	}
 }
 
 // GET /
@@ -31,18 +46,45 @@ func (h *Handler) Root(c *gin.Context) {
 // get server status
 func (h *Handler) Ping(c *gin.Context) {
 	currentTime := time.Now()
-	connectToDatabase := "unable to connect!"
+	connectionSuccess := "ok"
+	connectionFailed := "unable to connect!"
+	dbStatus := []models.DBStatus{}
 
-	// TODO: properly check connection
-	if h.db.IsConnected(context.Background()) {
-		connectToDatabase = "ok"
+	// check the connection status of the primary db
+	var primaryConn string
+	if h.primaryDB.IsConnected(context.Background()) {
+		primaryConn = connectionSuccess
+	} else {
+		primaryConn = connectionFailed
 	}
 
-	var status = models.Status{
+	primaryStatus := models.DBStatus{
+		Tier:       "primary",
+		Type:       h.primaryDB.Type(),
+		Connection: primaryConn,
+	}
+	dbStatus = append(dbStatus, primaryStatus)
+
+	// if set, also check secondary DB connection
+	if h.secondaryDB != nil {
+		var secondaryConn string
+		if h.secondaryDB.IsConnected(context.Background()) {
+			secondaryConn = connectionSuccess
+		} else {
+			secondaryConn = connectionFailed
+		}
+		secondaryStatus := models.DBStatus{
+			Tier:       "secondary",
+			Type:       h.secondaryDB.Type(),
+			Connection: secondaryConn,
+		}
+		dbStatus = append(dbStatus, secondaryStatus)
+	}
+
+	var status = models.APIStatus{
 		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
 		APIStatus: "ok",
-		DBStatus:  connectToDatabase,
-		DBType:    h.db.Type(),
+		DBStatus:  dbStatus,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": status})
@@ -55,13 +97,13 @@ func (h *Handler) GetAllBooks(c *gin.Context) {
 
 	// parse out author name in query params
 	table, err := utils.GetParams(c, "table")
-	fmt.Printf("table: %s\n", table)
+	log.Infof("table: %s\n", table)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "No 'title' parameter provided"})
 		return
 	}
 
-	data, err := h.db.All(ctx, table)
+	data, err := h.primaryDB.All(ctx, table)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
 		return
@@ -82,13 +124,49 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		return
 	}
 
-	book, err := h.db.Insert(ctx, "books", newBook)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
-		return
+	// struct to carry goroutine db insert results info
+	type insertRes struct {
+		Book models.Book // insert response book
+		Err  error       // inert error
+		DB   string      // "primary" or "secondary"
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": book})
+	// create buffered channel for up to 2 goroutines
+	results := make(chan insertRes, 2)
+
+	// always insert primary synchronously
+	go func(b models.InsertBookInput) {
+		book, err := h.primaryDB.Insert(ctx, "books", newBook)
+		results <- insertRes{Book: book, Err: err, DB: "primary"}
+	}(newBook)
+
+	// insert to the secondary DB if provided
+	insertedToSecondary := false
+	if h.secondaryDB != nil {
+		insertedToSecondary = true
+		go func(b models.InsertBookInput) {
+			book, err := h.secondaryDB.Insert(ctx, "books", newBook)
+			results <- insertRes{Book: book, Err: err, DB: "secondary"}
+		}(newBook)
+	}
+
+	numResults := 1
+	if insertedToSecondary {
+		numResults = 2
+	}
+
+	var respBook = models.Book{}
+	for i := 0; i < numResults; i++ {
+		res := <-results
+		if res.Err != nil {
+			log.Errorf("Database (%s) insert failed: %v", res.DB, res.Err)
+		}
+		if res.DB == "primary" {
+			respBook = res.Book
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": respBook})
 }
 
 // GET /books/title/
@@ -105,7 +183,7 @@ func (h *Handler) FindBook(c *gin.Context) {
 	}
 
 	// array of books to return
-	bookDocs, err := h.db.Get(ctx, "books", "Title", bookTitle)
+	bookDocs, err := h.primaryDB.Get(ctx, "books", "Title", bookTitle)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
 		return
@@ -125,7 +203,7 @@ func (h *Handler) FindAuthor(c *gin.Context) {
 	}
 
 	// array of books to return
-	authorBooks, err := h.db.Get(ctx, "books", "Author", author)
+	authorBooks, err := h.primaryDB.Get(ctx, "books", "Author", author)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
 		return
@@ -145,7 +223,7 @@ func (h *Handler) DeleteBook(c *gin.Context) {
 		return
 	}
 
-	booksDeleted, err := h.db.Drop(ctx, "books", "Title", title)
+	booksDeleted, err := h.primaryDB.Drop(ctx, "books", "Title", title)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Unable to complete query"})
 		return

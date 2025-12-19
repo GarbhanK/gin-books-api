@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/garbhank/gin-books-api/models"
 	"github.com/garbhank/gin-books-api/utils"
@@ -33,11 +34,15 @@ func NewMemoryDB(data map[string][]models.Book) *MemoryDB {
 	}
 }
 
+func (m *MemoryDB) Setup(ctx context.Context) error {
+	return nil
+}
+
 func (m *MemoryDB) Conn(ctx context.Context) error {
 	if m.Client == nil {
 		return errors.New("no in-memory database found")
 	}
-	fmt.Printf("Connected to MemoryDB! :: %v\n", m.Client)
+	log.Infof("Connected to MemoryDB! :: %v\n", m.Client)
 	return nil
 }
 

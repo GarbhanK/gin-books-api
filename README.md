@@ -15,6 +15,9 @@
 - [ ] see if I can/need to write tests for the Firestore/Postgres interfaces
     - mock the sdk interfaces?
 - [ ] see if I should move database tests into the database module
-- [ ] Have it so multiple db endpoints can be selected
+- [x] Have it so multiple db endpoints can be selected
     - have the same data be inserted to Postgres & MemoryDB at the same time
     - use channels with separate queues to split messages between them
+- [ ] Integration testing with go test containers: https://golang.testcontainers.org/quickstart/
+
+This project demonstrates both idiomatic Go CRUD API patterns and advanced Go concurrency. Writing to multiple DBs concurrently using Go channels and goroutines is deliberately implemented for demonstration, with error handling and discussion of consistency tradeoffs clearly documented. In a production system, transactional guarantees would be handled via distributed transactions or compensating logic; here, the focus is on illustrating Go's concurrency primitives within an API service

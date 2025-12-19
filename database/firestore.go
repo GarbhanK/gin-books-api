@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
+
 	"os"
 	"strings"
 
@@ -28,6 +30,16 @@ func NewFirestore() *Firestore {
 	return &Firestore{
 		projectId: projectId,
 	}
+}
+
+func (f *Firestore) Type() string { return "firestore" }
+
+func (f *Firestore) Setup(ctx context.Context) error {
+	return nil
+}
+
+func (f *Firestore) IsConnected(ctx context.Context) bool {
+	return f.Client != nil
 }
 
 func (f *Firestore) Conn(ctx context.Context) error {
@@ -154,9 +166,3 @@ func (f *Firestore) Drop(ctx context.Context, table, key, val string) (int, erro
 func (f *Firestore) All(ctx context.Context, table string) ([]models.Book, error) {
 	return []models.Book{}, nil
 }
-
-func (f *Firestore) IsConnected(ctx context.Context) bool {
-	return f.Client != nil
-}
-
-func (f *Firestore) Type() string { return "firestore" }

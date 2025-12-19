@@ -31,4 +31,3 @@ ENV GIN_MODE="release"
 
 # Run the web service on container startup
 CMD ["/app/api", "--db", "postgres"]
-

@@ -17,7 +17,7 @@ import (
 )
 
 type pingStatusTest struct {
-	Data models.Status `json:"data"`
+	Data models.APIStatus `json:"data"`
 }
 
 type postBookTest struct {
@@ -47,7 +47,7 @@ var seedDataMultiple map[string][]models.Book = map[string][]models.Book{
 }
 
 func TestGetPingRoute(t *testing.T) {
-	handler := controllers.NewHandler(database.NewMemoryDB(nil))
+	handler := controllers.NewHandler(database.NewMemoryDB(nil), nil)
 	router := setupRouter(handler, false)
 	currentTime := time.Now()
 
@@ -55,11 +55,15 @@ func TestGetPingRoute(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/ping", nil)
 	router.ServeHTTP(w, req)
 
-	pingResponse := models.Status{
+	status := models.DBStatus{
+		Tier:       "primary",
+		Type:       "memorydb",
+		Connection: "ok",
+	}
+	pingResponse := models.APIStatus{
 		Timestamp: currentTime.Format("2006-01-02 15:04:05"),
 		APIStatus: "ok",
-		DBStatus:  "ok",
-		DBType:    "memorydb",
+		DBStatus:  []models.DBStatus{status},
 	}
 
 	mockResponse := &pingStatusTest{Data: pingResponse}
@@ -70,7 +74,7 @@ func TestGetPingRoute(t *testing.T) {
 }
 
 func TestPostBookRoute(t *testing.T) {
-	handler := controllers.NewHandler(database.NewMemoryDB(nil))
+	handler := controllers.NewHandler(database.NewMemoryDB(nil), nil)
 	router := setupRouter(handler, false)
 
 	utils.UUID = func() string {
@@ -99,7 +103,7 @@ func TestPostBookRoute(t *testing.T) {
 
 func TestGetBookTitleSingleRoute(t *testing.T) {
 	// create memoryDB with seed data
-	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle))
+	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle), nil)
 	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
@@ -120,7 +124,7 @@ func TestGetBookTitleSingleRoute(t *testing.T) {
 
 func TestGetBookTitleMultipleRoute(t *testing.T) {
 	// create memoryDB with seed data
-	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple))
+	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple), nil)
 	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
@@ -141,7 +145,7 @@ func TestGetBookTitleMultipleRoute(t *testing.T) {
 }
 
 func TestGetBookAuthorSingleRoute(t *testing.T) {
-	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle))
+	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle), nil)
 	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
@@ -161,7 +165,7 @@ func TestGetBookAuthorSingleRoute(t *testing.T) {
 }
 
 func TestGetBookAuthorMultipleRoute(t *testing.T) {
-	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple))
+	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple), nil)
 	router := setupRouter(handler, false)
 	w := httptest.NewRecorder()
 
@@ -183,7 +187,7 @@ func TestGetBookAuthorMultipleRoute(t *testing.T) {
 
 // DELETE api/v1/books/?title=Fictions
 func TestDeleteBookPositive(t *testing.T) {
-	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple))
+	handler := controllers.NewHandler(database.NewMemoryDB(seedDataMultiple), nil)
 	router := setupRouter(handler, false)
 
 	w1 := httptest.NewRecorder()
@@ -210,7 +214,7 @@ func TestDeleteBookPositive(t *testing.T) {
 // DELETE /api/v1/books/?title=Fictions"
 func TestDeleteBookNegative(t *testing.T) {
 	// create memoryDB with seed data
-	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle))
+	handler := controllers.NewHandler(database.NewMemoryDB(seedDataSingle), nil)
 	router := setupRouter(handler, false)
 
 	w1 := httptest.NewRecorder()

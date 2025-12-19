@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/garbhank/gin-books-api/models"
 )
 
@@ -15,6 +17,23 @@ type Database interface {
 	Drop(ctx context.Context, table, key, val string) (int, error)
 	Insert(ctx context.Context, table string, data models.InsertBookInput) (models.Book, error)
 	IsConnected(ctx context.Context) bool // (test db connection, currently ping just checks for nil)
+	Setup(ctx context.Context) error
 	Type() string
-	// Setup() (could be used to create table if not exists, etc)
+}
+
+func GetDB(dbName string) Database {
+	var db Database
+
+	switch dbName {
+	case "firestore":
+		db = NewFirestore()
+	case "memorydb":
+		db = NewMemoryDB(nil)
+	case "postgres":
+		db = NewPostgres()
+	default:
+		log.Fatalf("Unknown DB type: %s", dbName)
+	}
+
+	return db
 }

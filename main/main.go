@@ -64,12 +64,16 @@ func setupRouter(handler *controllers.Handler, noCache bool) *gin.Engine {
 }
 
 func main() {
-	// parse environment variable opts
-	var dbType string // 'memory', 'firestore', or 'postgres'
-	if v := os.Getenv("DB_TYPE"); v != "" {
-		dbType = v
+	// parse database environment variables
+	var primary, secondary string // 'memory', 'firestore', or 'postgres'
+	if v := os.Getenv("PRIMARY_DB"); v != "" {
+		primary = v
+	}
+	if v := os.Getenv("SECONDARY_DB"); v != "" {
+		secondary = v
 	}
 
+	// parse cache environment variable
 	var noCache bool // 'true' or 'false'
 	if v := os.Getenv("ENABLE_CACHE"); v != "" {
 		if strings.ToLower(v) == "true" {
@@ -78,27 +82,31 @@ func main() {
 			noCache = false
 		}
 	}
-	// flag.Parse()
 
-	var db database.Database
+	var primaryDB, secondaryDB database.Database
 
-	switch dbType {
-	case "firestore":
-		db = database.NewFirestore()
-	case "memorydb":
-		db = database.NewMemoryDB(nil)
-	case "postgres":
-		db = database.NewPostgres()
-	default:
-		log.Fatalf("Unknown DB type: %s", dbType)
-	}
-
-	err := db.Conn(context.Background())
+	// create Database structs based on input name
+	primaryDB = database.GetDB(primary)
+	err := primaryDB.Conn(context.Background())
 	if err != nil {
-		log.Errorf("Unable to connect to database: %v\n", err)
+		log.Errorf("Unable to connect to primary database: %v\n", err)
 	}
 
-	handler := controllers.NewHandler(db)
+	// if set, also get the database type of the secondary
+	if secondary != "" {
+		secondaryDB = database.GetDB(secondary)
+		err := secondaryDB.Conn(context.Background())
+		if err != nil {
+			log.Errorf("Unable to connect to primary database: %v\n", err)
+		}
+		if primaryDB.Type() == secondaryDB.Type() {
+			log.Warnf("Primary and Secondary databases are of the same type: %v, %v", primaryDB.Type(), secondaryDB.Type())
+		}
+	}
+	log.Infof("Primary Database: %v\n", primaryDB.Type())
+	log.Infof("Secondary Database: %v\n", secondaryDB.Type())
+
+	handler := controllers.NewHandler(primaryDB, secondaryDB)
 	r := setupRouter(handler, noCache)
 
 	err = r.Run(":8080")

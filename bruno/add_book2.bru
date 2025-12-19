@@ -1,0 +1,27 @@
+meta {
+  name: add_book2
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:8080/api/v1/books/
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "Author": "Jorge Luis Borges",
+    "Title": "The Aleph"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

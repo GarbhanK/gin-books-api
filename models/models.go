@@ -1,16 +1,21 @@
 package models
 
 type Book struct {
-	Id	   string `json:"id" firestore:"id"`
+	Id     string `json:"id" firestore:"id"`
 	Title  string `json:"title" firestore:"title"`
 	Author string `json:"author" firestore:"author"`
 }
 
-type Status struct {
-	Timestamp string `json:"timestamp"`
-	APIStatus string `json:"api_status"`
-	DBStatus  string `json:"database_status"`
-	DBType    string `json:"database_type"`
+type APIStatus struct {
+	Timestamp string     `json:"timestamp"`
+	APIStatus string     `json:"api_status"`
+	DBStatus  []DBStatus `json:"db_status"`
+}
+
+type DBStatus struct {
+	Tier       string `json:"tier"`
+	Type       string `json:"type"`
+	Connection string `json:"status"`
 }
 
 type InsertBookInput struct {
@@ -26,4 +31,3 @@ type UpdateBookInput struct {
 type FindAuthorInput struct {
 	Author string `json:"author"`
 }
-
