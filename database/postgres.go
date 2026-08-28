@@ -39,7 +39,7 @@ func NewPostgres() *Postgres {
 	}
 
 	// if running as a container, use the docker network name instead of localhost
-	var hostname string = "localhost"
+	var hostname = "localhost"
 	if useContainerNetworking := os.Getenv("CONTAINER_NETWORKING"); useContainerNetworking == "true" {
 		hostname = host
 	}
